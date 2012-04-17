@@ -1,0 +1,32 @@
+System Requirements
+===================
+
+Two requeriments are highly recommended for hpg-fastq:
+	- CUDA 4.0 or higher
+	- Support for OpenMP 3.0 or higher
+
+Download and unzip
+==================
+
+The tool can be downloaded from: 
+
+	wget http://docs.bioinfo.cipf.es/attachments/381/hpg-fastq.zip
+
+The following command line is used to unzip files:
+
+	unzip hpg-fastq.zip
+
+Compilation
+===========
+
+A Makefile can be found in the created directory, enter the directory hpg-fastq and run:
+
+make clean hpg-fastq
+
+A binary file called hgp-fastq is generated in hpg-fastq/bin
+
+Execution
+=========
+
+See README for more info or execute hpg-fastq without parameters to obtain
+usage help

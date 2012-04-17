@@ -1,0 +1,204 @@
+=======================
+ hpg-fastq usage notes
+=======================
+
+Introduction
+============
+
+hpg-fastq can be run for:
+
+	- Quality Control: obtains quality control statistics
+	- Preprocessing: cuts the begin or the end of the read according to set up thresholds
+	- Filtering: classifies reads in valid or invalid according to the thresholds selected
+	- Calculate genomic signature based on Chaos Game
+	
+Quality Control
+===============
+
+Quality Control option will produce the following output:
+
+	- HTML Quality Control report containing: 
+		# General statistics:
+			* Number of reads
+			* Min. read length
+			* Max. read length
+			* Mean read length
+			* Mean read quality
+			* Anaylisis of nucleotides
+			* GC content
+			* Mean quality per nucleotide position
+			* 5-mer count (full count, sorted from higher to lower count)
+		# Graphics
+			* Quality per nucleotide position
+			* Per sequence quality scores
+			* Per base sequence content
+			* Per base GC content
+			* Per sequence GC content
+			* %N per nucleotide position
+			* Sequence length distribution
+			* 5-mer count per nucleotide position (full count)	
+	
+	- Data files (CSV format)
+		# Information by nucleotide position (%A, %C, %G, %T, %N, %GC, read length histogram, quality per position)
+		# Quality level histogram
+		# %GC histogram
+		# Total 5-mer count
+		# Total 5-mer per position
+	  
+A preprocessed read is obtained from the original read performing a trim of the first or last nucleotides
+if the selected criteria is not acomplished.
+
+Options for Quality Control
+---------------------------
+
+	--qc: flag for quality control, optional. Note: if not flag at all only quality control is performed
+	--outdir: directory where report and image files will be stored, mandatory
+	--batch-size: size in bytes of fastq batches, optional (default 64000000)
+	--batch-list-size: maximum length of the list to store fastq read batches of size read-batch-size, optional (default 10)
+	--fastq: synonymous of  --fq, input file, in FASTQ format, used in single end, mandatory for single end
+	--fastq1: synonymous of  --fq1, input file, in FASTQ format, used in paired end (pair 1), mandatory for paired end
+	--fastq2: synonymous of  --fq2, input file, in FASTQ format, used in paired end (pair 2), mandatory for paired end
+	--phred-quality: phred quality scale to determine base quality, accepted values: 33, 64, sanger (=33), solexa (=64); optional (default 33)
+	--kmers: flag for kmers calculation, optional (default no kmers)
+	--conf: path to file with launch options. Each line of the file must be exactly as in the command 
+	        line: parameter=value or flag, optional (if set file options override command line options)
+	--t: synonymous of  --time, activate timing when set, optional (default no timing)
+ 
+Command line example for Quality Control
+----------------------------------------
+
+./hpg-fastq --qc --fq1 1M_reads_pe_1.fastq --fq2 1M_reads_pe_2.fastq --outdir /tmp --batch-list-size 4 --batch-size 50000000 --kmers --cpu-num-threads 4 --t
+
+
+Preprocessing
+=============
+
+Preprocessing option will produce the following output:
+
+	- .valid fastq file (one for single end, two for paired end) with preprocessed reads according to the 
+	  given thresholds
+	  
+A preprocessed read is obtained from the original read performing a trim of the first or last nucleotides
+if the selected criteria is not acomplished.
+
+Options for Preprocessing
+-------------------------
+
+	--prep: flag for preprocessing. Note: if not flag at all only quality control is performed
+	--rtrim-nts: number of right nucleotides (last nucleotides) to screen, optional (default 0)
+	--ltrim-nts: number of left nucleotides (first nucleotides) to screen, optional (default 0)
+	--outdir: directory where .valid files will be stored, mandatory. Note: in paired end two files are generated
+	--batch-size: size in bytes of fastq batches, optional (default 64000000)
+	--batch-list-size: maximum length of the list to store fastq read batches of size read-batch-size, optional (default 10)
+	--fastq: synonymous of  --fq, input file, in FASTQ format, used in single end, mandatory for single end
+	--fastq1: synonymous of  --fq1, input file, in FASTQ format, used in paired end (pair 1), mandatory for paired end
+	--fastq2: synonymous of  --fq2, input file, in FASTQ format, used in paired end (pair 2), mandatory for paired end
+	--phred-quality: phred quality scale to determine base quality, accepted values: 33, 64, sanger (=33), solexa (=64); optional (default 33)
+	--min-quality: minimum quality accepted for the first/last nucleotides, optional (default 20), must be at least 10
+	--max-quality: maximum quality accepted for the first/last nucleotides, optional (default 60), must be at most 70
+	--conf: path to file with launch options. Each line of the file must be exactly as in the command 
+	        line: parameter=value or flag, optional (if set file options override command line options)
+	--t: synonymous of  --time, activate timing when set, optional (default no timing)
+
+Command line example for Preprocessing
+--------------------------------------
+
+./hpg-fastq --prep --rtrim-nts 3 --ltrim-nts 5 --outdir /tmp --batch-list-size 4 --batch-size 50000000 --fq 1M_reads_pe_1.fastq
+            --phred-quality 33 --min-quality 27 --max-quality 64 --t
+
+
+Filtering
+=========
+
+Filtering option will produce the following output:
+
+	- .valid fastq file for each processed fastq file (one for single end, two for paired end) containing 
+	  valid reads according to the given thresholds
+	  
+	- .invalid fastq file for each processed fastq file (one for single end, two for paired end) containing
+	  invalid reads according to the given thresholds
+	
+Options for Filtering
+---------------------
+	
+	--filter: flag for filtering. Note: if not action flag at all only quality control is performed
+    	--rfilter-nts: number of right nucleotides (last nucleotides) to screen its mean quality for validation, optional (default 0)
+    	--lfilter-nts: number of left nucleotides (first nucleotides) to screen its mean quality for validation, optional (default 0)
+    	--min-read-length: minimum length allowed in a read, optional (default 50)
+    	--max-read-length: maximum length allowed in a read, optional (default 200)
+    	--max-n-per-read: maximum N positions allowed in a read, optional (default 0)
+    	--max-nts-mismatch: maximum number of nt quality by read out of the accepted quality range, optional (default 3)
+    	--outdir: directory where .valid and .invalid files will be stored, mandatory
+    	--batch-size: size in bytes of fastq batches, optional (default 64000000)
+    	--batch-list-size: maximum length of the list to store fastq read batches of size read-batch-size, optional (default 10)
+	--fastq: synonymous of  --fq, input file, in FASTQ format, used in single end, mandatory for single end
+	--fastq1: synonymous of  --fq1, input file, in FASTQ format, used in paired end (pair 1), mandatory for paired end
+	--fastq2: synonymous of  --fq2, input file, in FASTQ format, used in paired end (pair 2), mandatory for paired end
+	--phred-quality: phred quality scale to determine base quality, accepted values: 33, 64, sanger (=33), solexa (=64); optional (default 33)
+    	--min-quality, minimum mean and median quality accepted, optional (default 20), must be at least 10
+	--max-quality, maximum mean and median quality accepted, optional (default 60), must be at most 70
+	--conf: path to file with launch options. Each line of the file must be exactly as in the command 
+	        line: parameter=value or flag, optional (if set file options override command line options)
+	--t: synonymous of  --time, activate timing when set, optional (default no timing)
+	
+	Note: if Quality Control is selected quality control statistics are provided  both over the .valid and .invalid file
+	
+Command line example for Chaos Game
+-----------------------------------
+
+./hpg-fastq --filter --rfilter-nts 5 --lfilter-nts 10 --outdir /tmp  --batch-list-size 4 --batch-size 50000000 --fq 1M_reads_pe_1.fastq
+            --phred-quality 33 --min-quality 30  --max-quality 65 --t
+	
+	
+Chaos Game
+==========
+
+If Chaos Game flag and options are set up the following output is obtained:
+
+	- Information in Quality Control report:
+		# Mean value of the difference between normalized sequence signature and reference 
+		  genome signature (ideally 0)
+		# Standard deviation of the difference between normalized sequence signature and 
+		  reference genome signature (varies with entered k value)
+		
+	- Chaos Game pictures: 
+		# Sequence signature
+		# Quality signature 
+		# Difference between normalized sequence signature and reference genome signature
+    
+Options for Chaos Game
+----------------------
+
+	--cg: flag for launch Chaos Game
+	--chaos-game: synonymous to --cg
+	--k: word size of the Chaos Game, natural number > 0, optional (default 10)
+	--gs-filename: filename containing genomic signature for the sequence of reference with the given k value, mandatory
+	
+	Notes: 
+		1) Chaos Game option is launched optionally but if launched it must be launched together with Quality Control
+		2) Higher values than 12 are not recommended due to time and memory consumption	
+		3) One or two fastq files must be supplied with (--fq for single end, or --fq1 and --fq2 for paired end)
+		4) If both paired end files are supplied the outputs are calculated seperately for both files
+
+Command line example for Chaos Game
+-----------------------------------
+
+./hpg-fastq --qc --fq1 1M_reads_pe_1.fastq --fq2 1M_reads_pe_2.fastq --outdir /tmp --batch-list-size 4 --batch-size 50000000 --t 
+            --chaos-game --k 7 --gs-filename genoma-ref/homo_1.fa_k\=7.fg
+
+Common options
+==============
+
+There are some common options for all the actions:
+
+	--cpu-num-threads: number of cpu threads launched with OpenMP in QC calculations (default value: number of cpu cores minus two or 1)
+	--gpu-num-threads: number of threads per block launched in GPU calculations, optional (default value: depends on compute capability, 512 threads on 2.0)
+	--log-file: path for log filename, optional (default value: no log file)
+	--log-level: log level between 1 (debug) and 5 (fatal), optional (default level 2, info). Scale: 1 (debug), 2 (info), 3 (warn), 4 (error) and 5 (fatal)
+	--v: synonymous of  --verbose, enables/disable console log, optional (default true)
+
+
+¿Any problem or suggestion?
+===========================
+
+Send an email to imedina@cipf.es
