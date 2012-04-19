@@ -2,13 +2,8 @@
 #ifndef FASTQ_COMMONS_H
 #define FASTQ_COMMONS_H
 
-
-/**
- *  Global variables and structs
- */
-
 /* **********************************************
- *  	Global variables and structs		*
+ *  	Global variables and structures		*
  * *********************************************/
 
 extern double chaos_game_time;

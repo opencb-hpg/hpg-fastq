@@ -42,7 +42,7 @@
 * Vector containing QC values for a given read (#A, #C, #G, #T, #N, length, ...)
 */
 typedef struct qc_read {
-	int counters[COUNTERS_SIZE];		/**< Vector containing A, C, G, T, N count, mean&median quality */
+    int counters[COUNTERS_SIZE];		/**< Vector containing A, C, G, T, N count, mean&median quality */
 } qc_read_t;
 
 /**
@@ -51,8 +51,8 @@ typedef struct qc_read {
 * Vector containing accumulated values of quality by nt position
 */
 typedef struct qc_quality {
-	int sum_quality[MAX_LINE_LENGTH];	/**< Vector containing the quality sum by read position */
-	int count[MAX_LINE_LENGTH];		/**< Vector containing the count of nts by read position */
+    int sum_quality[MAX_LINE_LENGTH];	/**< Vector containing the quality sum by read position */
+    int count[MAX_LINE_LENGTH];		/**< Vector containing the count of nts by read position */
 } qc_quality_t;
 
 /**
@@ -61,10 +61,10 @@ typedef struct qc_quality {
 * Structure containing kmers statistics for a given kmer: id, kmer string, kmer count, kmer count by position
 */
 typedef struct qc_kmers {
-	int id;						/**< Kmer id */
-	char kmer[5];					/**< String representation of the kmer (e.g.: AATCG) */
-	unsigned int total_count;			/**< Total count of the kmer */
-	unsigned int position_count[MAX_LINE_LENGTH];	/**< Count of the kmer by nt position */
+    int id;						/**< Kmer id */
+    char kmer[5];					/**< String representation of the kmer (e.g.: AATCG) */
+    unsigned int total_count;				/**< Total count of the kmer */
+    unsigned int position_count[MAX_LINE_LENGTH];	/**< Count of the kmer by nt position */
 } qc_kmers_t;
 
 /**
@@ -73,18 +73,18 @@ typedef struct qc_kmers {
 * Structure containing quality control information. A qc_batch contains information for a fastq_batch.
 */
 typedef struct qc_batch {
-	int id;						/**< Batch id */
-	int source_id;					/**< Source id (pair 1 or 2) */
-	int nb_reads;					/**< Number of reads in the batch */
-	fastq_batch_t* read_p;				/**< Pointer to batch of fastq reads */
-	qc_read_t* gpu_result_p;			/**< Pointer to qc_read_t results */
-	qc_quality_t* gpu_quality_result_p;		/**< Pointer to qc_quality_t results */
-	int* gpu_nt_type_valid_counter_p;		/**< Pointer to a nt position counter of valid reads */
-	int* gpu_nt_type_invalid_counter_p;		/**< Pointer to a nt position counter of invalid reads */
-	qc_kmers_t* gpu_kmers_valid_p;			/**< Pointer to qc_kmers structure of valid reads */
-	qc_kmers_t* gpu_kmers_invalid_p;		/**< Pointer to qc_kmers structure of invalid reads */
-	struct qc_batch* prev_p;			/**< Pointer to the previous qc_batch */
-	struct qc_batch* next_p;			/**< Pointer to the next qc_batch */
+    int id;					/**< Batch id */
+    int source_id;				/**< Source id (pair 1 or 2) */
+    int nb_reads;				/**< Number of reads in the batch */
+    fastq_batch_t* read_p;			/**< Pointer to batch of fastq reads */
+    qc_read_t* gpu_result_p;			/**< Pointer to qc_read_t results */
+    qc_quality_t* gpu_quality_result_p;		/**< Pointer to qc_quality_t results */
+    int* gpu_nt_type_valid_counter_p;		/**< Pointer to a nt position counter of valid reads */
+    int* gpu_nt_type_invalid_counter_p;		/**< Pointer to a nt position counter of invalid reads */
+    qc_kmers_t* gpu_kmers_valid_p;		/**< Pointer to qc_kmers structure of valid reads */
+    qc_kmers_t* gpu_kmers_invalid_p;		/**< Pointer to qc_kmers structure of invalid reads */
+    struct qc_batch* prev_p;			/**< Pointer to the previous qc_batch */
+    struct qc_batch* next_p;			/**< Pointer to the next qc_batch */
 } qc_batch_t;
 
 /* **************************************
@@ -131,6 +131,5 @@ char* kmers_string(int index, char* kmer);
 *  kmer1 total count is greater than kmer2
 */
 int kmers_sort(const void* k1, const void* k2);
-
 
 #endif /* QC_BATCH_H */
