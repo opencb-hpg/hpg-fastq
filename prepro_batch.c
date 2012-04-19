@@ -4,11 +4,9 @@
 
 #include "prepro_batch.h"
 
-//====================================================================================
-//  prepro_batch.c
-//
-//  prepro_batch methods for inserting, removing and deleting status_batch objects
-//====================================================================================
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
 
 //-----------------------------------------------------
 // status_batch_list_init
@@ -176,7 +174,6 @@ void status_batch_list_items_free(status_batch_list_t* list_p) {
 //-----------------------------------------------------
 
 void status_batch_free(status_batch_t* status_batch_p, int all) {
-
   if (status_batch_p == NULL) return;
 
   if (all) {

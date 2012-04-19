@@ -5,13 +5,11 @@
 
 #include "qc_batch.h"
 
-//====================================================================================
-//  qc_batch.c
-//
-//  qc_batch methods for inserting, removing and deleting qc_batch objects
-//====================================================================================
+//char* kmers_string(int index, char* kmer);
 
-char* kmers_string(int index, char* kmer);
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
 
 //-----------------------------------------------------
 // qc_batch_free

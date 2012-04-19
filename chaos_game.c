@@ -3,13 +3,18 @@
 
 #include "chaos_game.h"
 
-//-----------------------------------------------------------
-//	P R I V A T E   F U N C T I O N S
-//-----------------------------------------------------------
+/* **********************************************
+ *  		Private functions		*
+ * *********************************************/
 
 void chaos_game_normalize_quality_table_(chaos_game_data_t* chaos_game_data_p);
 void chaos_game_absolute_diff_table_(chaos_game_data_t* chaos_game_data_p);
 void chaos_game_generate_pgm_file_(unsigned int** table, int dim_n, double norm, int k_cg, char* pgm_filename);
+
+
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
 
 /*
       genomic signature header management functions
@@ -563,8 +568,7 @@ void chaos_game_absolute_diff_table_(chaos_game_data_t* chaos_game_data_p) {
 // generates .pgm file output
 //-----------------------------------------------------------
 
-void chaos_game_generate_pgm_file_(unsigned int** table, int dim_n, double norm, int k_cg, char* pgm_filename) {
-  
+void chaos_game_generate_pgm_file_(unsigned int** table, int dim_n, double norm, int k_cg, char* pgm_filename) {  
   int redim_n, int_point_value, zoom_factor, dif_k;
   float float_point_value;
   uchar** image_matrix; 	//for output images

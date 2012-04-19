@@ -2,6 +2,10 @@
 #ifndef PREPRO_KERNEL_CUDA_H
 #define PREPRO_KERNEL_CUDA_H
 
+/* **************************************
+ *  		Functions		*
+ * *************************************/
+
 /**
 *  @brief CUDA Kernel for qc, preprocessing and filtering
 *  @param d_read_batch_data_p pointer to data 

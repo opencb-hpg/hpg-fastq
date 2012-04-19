@@ -32,6 +32,10 @@
 	[--first-nts] [--begin-quality-nt] [--end-quality-nt] [--min-quality] [--max-quality] [--max-nts-mismatch] [--max-N-per-read] [--batch-size]	\
 	[--fastq|--fq]|[--fastq1|--fq1 --fastq2|--fq2] [--batch-list-size] [--phred-quality] [--kmers] [--rtrim] [--ltrim] [--t | --time] \
 	[--cg -k --gs-filename]"
+	
+/* **********************************************
+ *  		Global variables		*
+ * **********************************************/
 
 int time_flag = 0;
 
@@ -66,8 +70,7 @@ int number_of_batchs = 0;
 double mean_reads_per_batch = 0;
 double mean_batch_size = 0;
 
-int main(int argc, char **argv) {
-  
+int main(int argc, char **argv) {  
 	// setting global variables for logger
 	log_level = LOG_DEFAULT_LEVEL;
 	verbose = 1;

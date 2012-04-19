@@ -10,6 +10,10 @@
 #include "qc_batch.h"
 #include "qc_report.h"
 
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
+
 //---------------------------------------------------------------------------------------------
 //  CPU kernel for preprocessing/filtering rtrim_nts == rfilter_nts and ltrim_nts == lfilter_nts
 //  both sides quality is calculated only once (CPU implementation)

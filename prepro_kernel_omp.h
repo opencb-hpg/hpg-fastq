@@ -2,6 +2,10 @@
 #ifndef PREPRO_KERNEL_OMP_H
 #define PREPRO_KERNEL_OMP_H
 
+/* **************************************
+ *  		Functions		*
+ * *************************************/
+
 /**
 *  @brief OpenMP Kernel implementation for qc, preprocessing and filtering
 *  @param d_read_batch_data_p pointer to data 

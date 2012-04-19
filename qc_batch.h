@@ -5,12 +5,6 @@
 #include "commons.h"
 #include "fastq_batch.h"
 
-//====================================================================================
-//  qc_batch.h
-//
-//  structures and methods for inserting, removing and deleting qc_batch objects
-//====================================================================================
-
 #define MIN_QUALITY_VALUE		10	//Normalized
 #define MAX_QUALITY_VALUE		70	//Normalized
 
@@ -37,6 +31,10 @@
 #define INT_COUNTERS_SIZE_IN_MEMORY 	40
 #define MAX_LINE_LENGTH 		1024
 #define KMERS_COMBINATIONS		1024
+
+/* **************************************
+ *  		Structures		*
+ * *************************************/
 
 /**
 * @brief Structure for QC counters of a read 
@@ -88,6 +86,10 @@ typedef struct qc_batch {
 	struct qc_batch* prev_p;			/**< Pointer to the previous qc_batch */
 	struct qc_batch* next_p;			/**< Pointer to the next qc_batch */
 } qc_batch_t;
+
+/* **************************************
+ *  		Functions		*
+ * *************************************/
 
 /**
 *  @brief Frees a qc_batch structure

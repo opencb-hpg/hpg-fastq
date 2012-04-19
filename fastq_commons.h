@@ -7,6 +7,10 @@
  *  Global variables and structs
  */
 
+/* **********************************************
+ *  	Global variables and structs		*
+ * *********************************************/
+
 extern double chaos_game_time;
 extern struct timeval t1_chaos_game, t2_chaos_game;
 

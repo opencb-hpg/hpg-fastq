@@ -24,6 +24,10 @@
 #define	ONLY_VALID_READS		2
 #define	ONLY_INVALID_READS		3
 
+/* **************************************
+ *  		Functions		*
+ * *************************************/
+
 /**
 *  @brief Performs qc, preprocessing and/or filtering of a fastq single end file
 *  @param batch_size batch size of fastq reads to load from disk

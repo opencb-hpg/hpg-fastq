@@ -8,18 +8,16 @@
 #include "fastq_batch.h"
 #include "fastq_file.h"
 
-//====================================================================================
-//  prepro_batch.h
-//
-//  structures and methods for inserting, removing and deleting status_batch objects
-//====================================================================================
-
 #define VALID_READ		'V'
 #define INVALID_READ	 	'I'
 #define TRIM_READ	        'T'
 #define LTRIM_READ	        'L'
 #define RTRIM_READ	        'R'
 #define UNKNOWN_STATUS_READ     'U'
+
+/* **************************************
+ *  		Structures		*
+ * *************************************/
 
 /**
 * @brief Batch with status information about reads
@@ -28,13 +26,13 @@
 */
 
 typedef struct status_batch {
-  int id;				/**< Id of the batch */
-  int source_id;			/**< Source id (pairend 1 or 2) of the batch */
-  int num_reads;			/**< Number of reads of the batch */
-  char* read_status;			/**< Read status (valid, invalid) */
-  fastq_batch_t* read_p;		/**< Pointer to fastq reads */
-  struct status_batch* prev_p;		/**< Pointer to the previous batch */
-  struct status_batch* next_p;		/**< Pointer to the next batch */
+  int id;				/**< Id of the batch. */
+  int source_id;			/**< Source id (pairend 1 or 2) of the batch. */
+  int num_reads;			/**< Number of reads of the batch. */
+  char* read_status;			/**< Read status (valid, invalid). */
+  fastq_batch_t* read_p;		/**< Pointer to fastq reads. */
+  struct status_batch* prev_p;		/**< Pointer to the previous batch. */
+  struct status_batch* next_p;		/**< Pointer to the next batch. */
 } status_batch_t;
 
 /**
@@ -44,12 +42,16 @@ typedef struct status_batch {
 */
 
 typedef struct status_batch_list {
-  int length;					/**< Total length of the list */
-  int length_by_source_id[MAX_NUM_PRODUCERS];	/**< Length of the list by source id */
-  pthread_mutex_t lock;				/**< Lock  */
-  struct status_batch* first_p;			/**< Pointer to the first batch in the list */
-  struct status_batch* last_p;			/**< Pointer to the last batch in the list */
+  int length;					/**< Total length of the list. */
+  int length_by_source_id[MAX_NUM_PRODUCERS];	/**< Length of the list by source id. */
+  pthread_mutex_t lock;				/**< Lock.  */
+  struct status_batch* first_p;			/**< Pointer to the first batch in the list. */
+  struct status_batch* last_p;			/**< Pointer to the last batch in the list. */
 } status_batch_list_t;
+
+/* **************************************
+ *  		Functions		*
+ * *************************************/
 
 /**
 *  @brief Init a status batch list

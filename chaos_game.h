@@ -32,16 +32,20 @@
 
 #define uchar  unsigned char
 
+/* **************************************
+ *  		Structures		*
+ * *************************************/
+
 /**
 * @brief Header of Genomic Signature
 * 
 * Structure containing the fields of the header of a Genomic Signature file
 */
 typedef struct header_gs {
-  char          gs_filename[180];	/**< Genomic Signature filename */
-  unsigned int  word_size_k;		/**< Word size (k) */
-  unsigned int  dim_x, dim_y;		/**< X and Y dimensions */
-  unsigned int  ref_word_count; 	/**< Total words of the reference sequence */
+  char          gs_filename[180];	/**< Genomic Signature filename. */
+  unsigned int  word_size_k;		/**< Word size (k). */
+  unsigned int  dim_x, dim_y;		/**< X and Y dimensions. */
+  unsigned int  ref_word_count; 	/**< Total words of the reference sequence. */
 } header_gs_t;
 
 /**
@@ -50,27 +54,31 @@ typedef struct header_gs {
 * Structure containing data used in the Chaos Game (filenames, matrix, work size, ...)
 */
 typedef struct chaos_game_data {
-  unsigned int**  table_seq;		/**< Table for sequences */
-  unsigned int**  table_q;		/**< Table for qualities */
-  unsigned int**  table_gs;		/**< Table for genomic signature */
-  int**           table_dif; 		/**< Table for diff between TABLE_SEQ and TABLE_GS */
-  double 	  mean_table_dif_value;			/**< Mean value of the diff matrix */
-  double 	  standard_deviation_table_dif_value;	/**< Standard deviation value of the diff matrix */
-  int 		  highest_table_dif_value;		/**< Highest value in the diff matrix */
-  int 		  lowest_table_dif_value;		/**< Lowest value in the diff matrix */
-  unsigned int word_size_k;		/**< Word size */
-  unsigned int fq_word_count;		/**< Total read words */
-  unsigned int ref_word_count;		/**< Total words of the reference sequence */
-  double norm;				/**< Value to normalize output matrix */ 
-  int dim_n;				/**< Dimension of the tables (dim_n X dim_n) */
-  int memory_size;			/**< Memory size for each table */
-  double f_x;				/**< X coordinate of the coloured point */
-  double f_y;				/**< Y coordinate of the coloured point */
+  unsigned int**  table_seq;				/**< Table for sequences. */
+  unsigned int**  table_q;				/**< Table for qualities. */
+  unsigned int**  table_gs;				/**< Table for genomic signature. */
+  int**           table_dif; 				/**< Table for diff between TABLE_SEQ and TABLE_GS. */
+  double 	  mean_table_dif_value;			/**< Mean value of the diff matrix. */
+  double 	  standard_deviation_table_dif_value;	/**< Standard deviation value of the diff matrix. */
+  int 		  highest_table_dif_value;		/**< Highest value in the diff matrix. */
+  int 		  lowest_table_dif_value;		/**< Lowest value in the diff matrix. */
+  unsigned int word_size_k;				/**< Word size. */
+  unsigned int fq_word_count;				/**< Total read words. */
+  unsigned int ref_word_count;				/**< Total words of the reference sequence. */
+  double norm;						/**< Value to normalize output matrix. */ 
+  int dim_n;						/**< Dimension of the tables (dim_n X dim_n). */
+  int memory_size;					/**< Memory size for each table. */
+  double f_x;						/**< X coordinate of the coloured point. */
+  double f_y;						/**< Y coordinate of the coloured point. */
   int base_quality;
-  char pgm_fastq_filename[MAX_PGM_FILENAME_LENGTH];	/**< The three name of the files are stored for copy to the qc_report */
+  char pgm_fastq_filename[MAX_PGM_FILENAME_LENGTH];	/**< The three name of the files are stored for copy to the qc_report. */
   char pgm_quality_filename[MAX_PGM_FILENAME_LENGTH];
   char pgm_diff_filename[MAX_PGM_FILENAME_LENGTH];  
 } chaos_game_data_t;
+
+/* **************************************
+ *  		Functions		*
+ * *************************************/
 
 /**
 *  @brief Initializes a Genomic Signature header

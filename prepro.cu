@@ -21,10 +21,9 @@ extern "C" {
 #define BLOCK_SIZE		16
 #define CPU_QC_WORKERS		0
 
-
-//====================================================================================
-//  structures and functions for multi-threading support
-//====================================================================================
+/* **************************************
+ *  		Structures		*
+ * *************************************/
 
 // structures for gpu server thread
 typedef struct qc_calc_server_input {
@@ -83,7 +82,10 @@ typedef struct writer_server_input {
 	char* output_directory;
 } writer_server_input_t;
 
-// threads functions
+/* **********************************************
+ *  		Private functions		*
+ * *********************************************/
+
 void* qc_calc_server(void* param_p);
 void* results_server(void* param_p);
 void* writer_single_end_server(void* param_p);
@@ -101,6 +103,10 @@ void filtering_read(int i, int read_length, results_server_input_t* input_p, qc_
 
 int kmers_index(char* nt);
 
+/* ******************************************************
+ *  		Global variables			*
+ * ******************************************************/
+
 // the following global variables for reads and results batchs are critical structures if used within threads
 // they must be accessed EXCLUSIVELY when modifying
 list_t qc_batch_list;
@@ -112,10 +118,9 @@ int results_thread_alive = 1;
 pthread_mutex_t gpus_thread_alive_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t results_thread_alive_lock = PTHREAD_MUTEX_INITIALIZER;
 
-//====================================================================================
-// thread functions
-//====================================================================================
-
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
 
 //-----------------------------------------------------
 // qc_calc_server,

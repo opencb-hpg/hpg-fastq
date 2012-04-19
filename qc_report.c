@@ -10,7 +10,10 @@
 #include "qc_report.h"
 #include "file_utils.h"
 
-// private functions for datafile and graph generation
+/* **********************************************
+ *  		Private functions		*
+ * *********************************************/
+
 void print_qc_text_report_file(qc_report_t qc_report, int base_quality, char *inputfilename, char *outfilename);
 void print_chaos_game_text_report_file(qc_report_t qc_report, char *outfilename);
 void generate_position_datafile(qc_report_t qc_report, char* filename);
@@ -31,6 +34,9 @@ void generate_gnuplot_image(qc_graph_t qc_graph, char* data_filename, char* grap
 void generate_html_file_with_images(qc_report_t qc_report, int kmers_on, char* html_filename, char* report_directory, char* in_shortname);
 void generate_html_file_valid_with_images(qc_report_t qc_report, int kmers_on, int cg_flag, char* html_filename, char* report_directory, char* in_shortname, int valid);
 
+/* ******************************************************
+ *  		Function implementations		*
+ * ******************************************************/
 
 //-----------------------------------------------------
 // qc_report_get_values_from_chaos_game (public)
