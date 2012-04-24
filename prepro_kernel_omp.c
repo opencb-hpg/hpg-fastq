@@ -1,6 +1,5 @@
 
 #include "commons.h"
-#include "cuda_commons.h"
 #include "fastq_file.h"
 #include "fastq_batch_list.h"
 #include "fastq_batch_reader.h"

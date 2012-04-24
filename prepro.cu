@@ -2,7 +2,6 @@
 #ifndef PREPRO_CU
 #define PREPRO_CU
 
-
 extern "C" {
     #include "fastq_batch_reader.h"
     #include "fastq_read.h"
@@ -1151,7 +1150,6 @@ void qc_results(results_server_input_t* input_p, long* read_sum_length, qc_repor
     int i = 0;
 
     for (int source_id = 0; source_id < input_p->num_sources; source_id++) {
-
         if (time_flag) {
             start_timer(t1_result);
         }

@@ -51,7 +51,7 @@ void qc_report_get_values_from_chaos_game(chaos_game_data_t* chaos_game_data_p, 
     qc_report->lowest_table_dif_value = chaos_game_data_p->lowest_table_dif_value;
 }
 
-void generate_report(qc_report_t qc_report, char* inputfilename, int base_quality, int kmers_on, int cg_flag, char* report_directory, int valid) {
+void generate_report(qc_report_t qc_report, char* inputfilename, int base_quality, int kmers_on, int cg_flag, char* report_directory, int valid) {  
     //if there is no read there is no report to print!!!!
     if (qc_report.nb_reads == 0) return;
 
@@ -253,8 +253,32 @@ void plot_nt_quality(qc_report_t* qc_report_p, char* data_filename, char* graph_
     qc_graph.num_y_columns = 1;
     qc_graph.y_columns[0] = NT_QUALITY_COLUMN;
 
+printf("before generate_gnuplot_image - --------------->\n");
     generate_gnuplot_image(qc_graph, data_filename, graph_filename);
+printf("after generate_gnuplot_image - --------------->\n");    
 }
+
+//plot_nt_quality_public("/tmp/200k_reads_pe_1.fastq.pos.dat.valid", "/tmp/200k_reads_pe_1.fastq.nt_quality.valid.png");
+// void plot_nt_quality_public(char* data_filename, char* graph_filename) {
+//     qc_graph_t qc_graph;
+//     set_qc_graph_default_values(&qc_graph);
+// 
+//     qc_graph.title = "Quality per nucleotide position";
+//     qc_graph.xlabel = "nt position";
+//     qc_graph.ylabel = "Quality (normalized Prhed scale)";
+//     qc_graph.type = "lines";
+//     qc_graph.x_autoscale = 0;
+//     qc_graph.x_start = 0;
+//     qc_graph.x_end = 100;
+//     qc_graph.y_autoscale = 1;
+//     qc_graph.x_column = POS_COLUMN;
+//     qc_graph.num_y_columns = 1;
+//     qc_graph.y_columns[0] = NT_QUALITY_COLUMN;
+// 
+// printf("before generate_gnuplot_image - --------------->\n");
+//     generate_gnuplot_image(qc_graph, data_filename, graph_filename);
+// printf("after generate_gnuplot_image - --------------->\n");    
+// }
 
 void plot_read_quality(char* quality_filename, char* graph_filename) {
     qc_graph_t qc_graph;
@@ -470,14 +494,42 @@ qc_graph_t* set_qc_graph_default_values(qc_graph_t* qc_graph) {
 }
 
 void generate_gnuplot_image(qc_graph_t qc_graph, char* data_filename, char* graph_filename) {
+  
+  printf("data_filename: %s\n", data_filename);
+  printf("graph_filename: %s\n", graph_filename);
+  
+  //FILE *graph_fd = popen("display", "w");
+//  FILE *graph_fd = popen("gnuplot -persist", "w");
+  //printf("closing graph_fd %x...\n", graph_fd);
+  //pclose(graph_fd);
+  //printf("closing graph_fd %x done !!\n", graph_fd);
+
     // lines specifying input data and output graph are declared and filled
     char line[MAX_FULL_PATH_LENGTH];
 
     // graph is parametrized based on qc_graph options and plotted
-    FILE *graph_fd = popen("gnuplot -persist", "w");
-
+    //FILE* graph_fd_aux = popen("gnuplot -persist", "w");
+    //FILE* graph_fd = (FILE*)calloc(1, sizeof(FILE));
+    //memcpy(graph_fd, graph_fd_aux, sizeof(FILE));
+    
+    FILE* graph_fd = popen("gnuplot -persist", "w");    
+    //FILE* graph_other = fopen("/tmp/prueba.txt", "w");
+    //fclose(graph_other);
+    //return;
+printf("line: %x\n", line);
+printf("graph_fd: %x\n", graph_fd);
+printf("graph_fd: %i\n", graph_fd);
     sprintf(line, "set output '%s'\n", graph_filename);
+printf("1 - --------------->\n");
+printf("line: %s\n", line);
+printf("line: %x\n", line);
+printf("graph_fd: %x\n", graph_fd);
+printf("graph_fd: %i\n", graph_fd);
+printf("graph_fd is NULL: %i\n", (graph_fd == NULL) ? 1:0);
+    fprintf(graph_fd, " ");
+printf("2 - --------------->\n");            
     fprintf(graph_fd, line);
+printf("3 - --------------->\n");
     fprintf(graph_fd, "set terminal png nocrop enhanced font arial 10 size 640,360\n");
     sprintf(line, "set ylabel '%s'\n", qc_graph.ylabel);
     fprintf(graph_fd, line);
@@ -512,13 +564,12 @@ void generate_gnuplot_image(qc_graph_t qc_graph, char* data_filename, char* grap
 
     sprintf(line, "plot ");
 
-    int i;
-    for (i = 0; i < qc_graph.num_y_columns; i++) {
+    for (int i = 0; i < qc_graph.num_y_columns; i++) {
         sprintf(line, "%s%s '%s' using %i:%i title '%s' with %s", line, (i == 0 ? "" : ", "), data_filename, qc_graph.x_column, qc_graph.y_columns[i], qc_graph.y_titles[i], qc_graph.type);
     }
     fprintf(graph_fd, line);
 
-    pclose(graph_fd);
+    pclose(graph_fd);    
 }
 
 void generate_html_file_with_images(qc_report_t qc_report, int kmers_on, char* html_filename, char* report_directory, char* in_shortname) {
@@ -717,5 +768,3 @@ void generate_html_file_valid_with_images(qc_report_t qc_report, int kmers_on, i
 
     fclose(fd);
 }
-
-

@@ -8,7 +8,6 @@
 
 #include "chaos_game.h"
 #include "commons.h"
-#include "cuda_commons.h"
 #include "log.h"
 #include "file_utils.h"
 #include "string_utils.h"

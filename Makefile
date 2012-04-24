@@ -49,7 +49,7 @@ cuda_commons.o: $(COMMONS_CUDA_LIB)/cuda_commons.cu $(COMMONS_CUDA_LIB)/cuda_com
 	$(NVCC) $(NVCCFLAGS) -c $(COMMONS_CUDA_LIB)/cuda_commons.cu
 
 fastq_hpc_main.o: fastq_hpc_main.c *.h
-	$(CC) $(CFLAGS) $(CINCLUDES) -c fastq_hpc_main.c
+	$(CC) $(CFLAGS) $(CINCLUDES) -DCUDA_VERSION -c fastq_hpc_main.c
 
 hpg-fastq-objects:
 	$(CC) $(CFLAGS) $(CINCLUDES) -c $(CONTAINERS_LIB)/list.c $(FASTQ_LIB)/*.c $(COMMONS_LIB)/file_utils.c $(COMMONS_LIB)/log.c  $(COMMONS_LIB)/string_utils.c \
