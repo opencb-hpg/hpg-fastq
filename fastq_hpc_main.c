@@ -13,17 +13,18 @@
 #include "string_utils.h"
 #include "system_utils.h"
 
-#define DEFAULT_MIN_READ_LENGTH    50
-#define DEFAULT_MAX_READ_LENGTH    200
+#define DEFAULT_MIN_READ_LENGTH     50
+#define DEFAULT_MAX_READ_LENGTH     200
 #define DEFAULT_MIN_READ_QUALITY    20
 #define DEFAULT_MAX_READ_QUALITY    60
 
-#define DEFAULT_GPU_NUM_BLOCKS     16
-#define DEFAULT_GPU_NUM_THREADS    512
-#define DEFAULT_GPU_NUM_DEVICES    0
-#define DEFAULT_CPU_NUM_THREADS    2
-#define DEFAULT_BATCH_SIZE_MB     64
-#define DEFAULT_BATCH_LIST_SIZE    4
+#define DEFAULT_GPU_NUM_BLOCKS      16
+#define DEFAULT_GPU_NUM_THREADS     512
+#define DEFAULT_GPU_NUM_DEVICES     0
+#define DEFAULT_CPU_NUM_THREADS     2
+#define DEFAULT_QC_CALC_NUM_THREADS 0
+#define DEFAULT_BATCH_SIZE_MB       64
+#define DEFAULT_BATCH_LIST_SIZE     4
 
 #define DEFAULT_K_IN_CHAOS_GAME    10
 
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
     int gpu_num_threads =  DEFAULT_GPU_NUM_THREADS;  // 512
     int gpu_num_devices =  DEFAULT_GPU_NUM_DEVICES;  // -1
     int cpu_num_threads =  DEFAULT_CPU_NUM_THREADS;  // 2
+    int cpu_qc_calc_num_threads = DEFAULT_QC_CALC_NUM_THREADS; //0
     size_t batch_size =  DEFAULT_BATCH_SIZE_MB * 1000000; // 64MB
     int batch_list_size =  DEFAULT_BATCH_LIST_SIZE;  // 4
 
@@ -652,6 +654,12 @@ int main(int argc, char **argv) {
     if (gpu_num_threads == DEFAULT_GPU_NUM_THREADS) {
         gpu_num_threads = get_optimal_gpu_num_threads();
     }
+    
+    // if there is no kmers calculation cpu threads are used for qc calculations
+    // remember: if kmers_flag is active cpu_qc_calc_num_threads equals 0
+    if (!kmers_flag) {
+        cpu_qc_calc_num_threads = cpu_num_threads;
+    }
 
     // number of rtrim nucleotides cannot be more than half the minumum read length
     if (rtrim_nts > (min_read_length / 4)) {
@@ -695,9 +703,9 @@ int main(int argc, char **argv) {
     gpu_num_blocks = (batch_size / 2 / gpu_num_threads) + 1;
 
     if (fastq_input != NULL) {
-        kernel_prepro_fastq_single_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, fastq_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);
+        kernel_prepro_fastq_single_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, cpu_qc_calc_num_threads, fastq_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);
     } else if (fastq1_input != NULL && fastq2_input != NULL) {
-        kernel_prepro_fastq_paired_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, fastq1_input, fastq2_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);
+        kernel_prepro_fastq_paired_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, cpu_qc_calc_num_threads, fastq1_input, fastq2_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);
     } else {
         printf("Missing input files\n");
         printf(FASTQ_HPC_TOOLS_USAGE);

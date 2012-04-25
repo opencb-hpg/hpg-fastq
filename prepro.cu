@@ -14,7 +14,9 @@ extern "C" {
     #include "prepro_kernel_omp.h"
 }
 
-#include "prepro_kernel_cuda.h"
+#ifdef CUDA_VERSION
+    #include "prepro_kernel_cuda.h"
+#endif
 
 #define BLOCK_SIZE  16
 #define CPU_QC_WORKERS  0
@@ -72,7 +74,7 @@ void* qc_calc_server(void* params_p) {
     fastq_batch_list_t* batch_list_p = input_p->batch_list_p;
     qc_batch_t* qc_batch_p = NULL;
     list_item_t* item_p = NULL;
-    int nb_total_threads = input_p->num_blocks * input_p->num_threads;
+    int num_total_threads = input_p->num_blocks * input_p->num_threads;
 
     // variables for store output results in both CPU and GPU
     qc_read_t* gpu_result_p = NULL;
@@ -109,9 +111,7 @@ void* qc_calc_server(void* params_p) {
                 memset(gpu_kmers_invalid_p, 0, KMERS_COMBINATIONS * sizeof(qc_kmers_t));
             }
 
-            //cpu_num_threads = 1;
-
-            //if (cpu_num_threads == 0) {
+            #ifdef CUDA_VERSION
             if (input_p->gpu_device_id[0] < input_p->num_gpu_devices) {
                 LOG_DEBUG("qc calculation on GPU thread...\n");
 
@@ -170,7 +170,6 @@ void* qc_calc_server(void* params_p) {
 
                 // ---------------- GREP kernel call ---------------------------------
 
-
                 // copy result from GPU (GPU -> CPU)
                 CUDA_SAFE_CALL(cudaMemcpy(gpu_result_p, d_gpu_result_p, sizeof(qc_read_t) * fastq_batch_list_item_p->batch_p->num_reads, cudaMemcpyDeviceToHost));
 
@@ -180,6 +179,8 @@ void* qc_calc_server(void* params_p) {
                 CUDA_SAFE_CALL(cudaFreeHost(d_data_indices_p));
                 CUDA_SAFE_CALL(cudaFreeHost(d_gpu_result_p));
             } else {
+	    #endif
+
                 LOG_DEBUG("qc calculation on CPU thread...\n");
 
                 mean_batch_size += fastq_batch_list_item_p->batch_p->data_size;
@@ -194,7 +195,9 @@ void* qc_calc_server(void* params_p) {
                 }
 
                 //if (time_flag) { stop_timer(t1_cpu, t2_cpu, cpu_time); }
+            #ifdef CUDA_VERSION
             }
+	    #endif
 
             // create a new qc_batch object
             qc_batch_p = (qc_batch_t*) malloc(sizeof(qc_batch_t));
@@ -1233,15 +1236,21 @@ int kmers_index(char* nt) {
  *    		Single-end processing main function implementation (public)  		*
  * *************************************************************************************/
 
-void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
+void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
     int num_gpu_devices;
+
+    #ifdef CUDA_VERSION
     cudaError_t cudaResultCode = cudaGetDeviceCount(&num_gpu_devices);
     if (cudaResultCode != cudaSuccess) {
         num_gpu_devices = 0;
     }
-    //num_gpu_devices = 0; // value for validation purpose
-    gpus_thread_alive = num_gpu_devices + CPU_QC_WORKERS;
+    #else
+    num_gpu_devices = 0;
+    #endif
 
+    gpus_thread_alive = num_gpu_devices + cpu_qc_calc_num_threads;
+
+    #ifdef CUDA_VERSION
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
     if (!prop.canMapHostMemory) {
@@ -1249,17 +1258,18 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
         sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
         LOG_FATAL(log_message);
     }
+    #endif
 
-    int nb_total_threads = num_blocks * num_threads;
+    int num_total_threads = num_blocks * num_threads;
 
     // some local variables
     void* r;
 
     // multi-threads, one gpu_server_thread by gpu device
-    pthread_t** qc_calc_server_thread_p = (pthread_t**) calloc((num_gpu_devices + CPU_QC_WORKERS), sizeof(pthread_t*));
-    qc_calc_server_input_t** qc_calc_server_input_p = (qc_calc_server_input_t**) calloc((num_gpu_devices + CPU_QC_WORKERS), sizeof(qc_calc_server_input_t*));
+    pthread_t** qc_calc_server_thread_p = (pthread_t**) calloc((num_gpu_devices + cpu_qc_calc_num_threads), sizeof(pthread_t*));
+    qc_calc_server_input_t** qc_calc_server_input_p = (qc_calc_server_input_t**) calloc((num_gpu_devices + cpu_qc_calc_num_threads), sizeof(qc_calc_server_input_t*));
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         qc_calc_server_thread_p[i] = (pthread_t*) calloc(1, sizeof(pthread_t));
         qc_calc_server_input_p[i] = (qc_calc_server_input_t*) calloc(1, sizeof(qc_calc_server_input_t));
     }
@@ -1273,9 +1283,9 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
     status_batch_list_init(&status_batch_list);
 
     if (num_gpu_devices > 0) {
-        list_init("qc_batch_list", (num_gpu_devices + CPU_QC_WORKERS), max_fastq_batch_list_length, &qc_batch_list);
+        list_init("qc_batch_list", (num_gpu_devices + cpu_qc_calc_num_threads), max_fastq_batch_list_length, &qc_batch_list);
     } else {
-        list_init("qc_batch_list", CPU_QC_WORKERS, max_fastq_batch_list_length, &qc_batch_list);
+        list_init("qc_batch_list", cpu_qc_calc_num_threads, max_fastq_batch_list_length, &qc_batch_list);
     }
 
     // calling thread to serve reads from file, but first, prepare input parameter
@@ -1290,7 +1300,7 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
 
     // calling thread to serve GPUs, and again, prepare input parameter
     if (num_gpu_devices > 0) { // GPU implementacion
-        for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+        for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
             qc_calc_server_input_p[i]->num_gpu_devices = num_gpu_devices;
             qc_calc_server_input_p[i]->cpu_num_threads = 0;
             qc_calc_server_input_p[i]->gpu_device_id[0] = i;
@@ -1309,7 +1319,7 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
             pthread_create(qc_calc_server_thread_p[i], NULL, qc_calc_server, (void*) qc_calc_server_input_p[i]);
         }
     } else {
-        for (int i = 0; i < CPU_QC_WORKERS; i++) {
+        for (int i = 0; i < cpu_qc_calc_num_threads; i++) {
             qc_calc_server_input_p[i]->num_gpu_devices = 0;
             qc_calc_server_input_p[i]->cpu_num_threads = cpu_num_threads;
             qc_calc_server_input_p[i]->gpu_device_id[0] = 0;
@@ -1375,7 +1385,7 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
         pthread_join(writer_server_thread, &r);
     }
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         pthread_join(*qc_calc_server_thread_p[i], &r);
         free(qc_calc_server_thread_p[i]);
     }
@@ -1383,7 +1393,7 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
     // free thread stuff and parameters
     fastq_batch_reader_free(batch_reader_p);
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         free(qc_calc_server_input_p[i]);
     }
     free(qc_calc_server_input_p);
@@ -1393,15 +1403,21 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
  *    		Paired-end processing main function implementations (public)  		*
  * *************************************************************************************/
 
-void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, char* filename1, char* filename2, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
+void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename1, char* filename2, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
     int num_gpu_devices;
+
+    #ifdef CUDA_VERSION
     cudaError_t cudaResultCode = cudaGetDeviceCount(&num_gpu_devices);
     if (cudaResultCode != cudaSuccess) {
         num_gpu_devices = 0;
     }
-    //num_gpu_devices = 0; // value for validation purpose
-    gpus_thread_alive = num_gpu_devices + CPU_QC_WORKERS;
+    #else
+    num_gpu_devices = 0;
+    #endif
 
+    gpus_thread_alive = num_gpu_devices + cpu_qc_calc_num_threads;
+
+    #ifdef CUDA_VERSION
     cudaDeviceProp prop;
 
     CUDA_SAFE_CALL(cudaGetDeviceProperties(&prop, 0);)
@@ -1411,17 +1427,18 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
         sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
         LOG_FATAL(log_message);
     }
+    #endif
 
-    int nb_total_threads = num_blocks * num_threads;
+    int num_total_threads = num_blocks * num_threads;
 
     // some local variables
     void* r;
 
     // multi-threads, one gpu_server_thread by gpu device
-    pthread_t** qc_calc_server_thread_p = (pthread_t**) calloc((num_gpu_devices + CPU_QC_WORKERS), sizeof(pthread_t*));
-    qc_calc_server_input_t** qc_calc_server_input_p = (qc_calc_server_input_t**) calloc((num_gpu_devices + CPU_QC_WORKERS), sizeof(qc_calc_server_input_t*));
+    pthread_t** qc_calc_server_thread_p = (pthread_t**) calloc((num_gpu_devices + cpu_qc_calc_num_threads), sizeof(pthread_t*));
+    qc_calc_server_input_t** qc_calc_server_input_p = (qc_calc_server_input_t**) calloc((num_gpu_devices + cpu_qc_calc_num_threads), sizeof(qc_calc_server_input_t*));
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         qc_calc_server_thread_p[i] = (pthread_t*) calloc(1, sizeof(pthread_t));
         qc_calc_server_input_p[i] = (qc_calc_server_input_t*) calloc(1, sizeof(qc_calc_server_input_t));
     }
@@ -1435,9 +1452,9 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
     status_batch_list_init(&status_batch_list);
 
     if (num_gpu_devices > 0) {
-        list_init("qc_batch_list", (num_gpu_devices + CPU_QC_WORKERS), max_fastq_batch_list_length, &qc_batch_list);
+        list_init("qc_batch_list", (num_gpu_devices + cpu_qc_calc_num_threads), max_fastq_batch_list_length, &qc_batch_list);
     } else {
-        list_init("qc_batch_list", CPU_QC_WORKERS, max_fastq_batch_list_length, &qc_batch_list);
+        list_init("qc_batch_list", cpu_qc_calc_num_threads, max_fastq_batch_list_length, &qc_batch_list);
     }
 
     int num_sources = 2;
@@ -1460,7 +1477,7 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
     // calling thread to serve GPUs or CPUs, and again, prepare input parameters
     // one thread by gpu
     if (num_gpu_devices > 0) { // GPU implementacion
-        for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+        for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
             qc_calc_server_input_p[i]->num_gpu_devices = num_gpu_devices;
             qc_calc_server_input_p[i]->cpu_num_threads = 0;
             qc_calc_server_input_p[i]->gpu_device_id[0] = i;
@@ -1479,7 +1496,7 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
             pthread_create(qc_calc_server_thread_p[i], NULL, qc_calc_server, (void*) qc_calc_server_input_p[i]);
         }
     } else {
-        for (int i = 0; i < CPU_QC_WORKERS; i++) {
+        for (int i = 0; i < cpu_qc_calc_num_threads; i++) {
             qc_calc_server_input_p[i]->num_gpu_devices = 0;
             qc_calc_server_input_p[i]->cpu_num_threads = cpu_num_threads;
             qc_calc_server_input_p[i]->gpu_device_id[0] = 0;
@@ -1551,7 +1568,7 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
         stop_timer(t1_read, t2_read, read_time);
     }
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         pthread_join(*qc_calc_server_thread_p[i], &r);
         free(qc_calc_server_thread_p[i]);
     }
@@ -1568,7 +1585,7 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
     fastq_batch_reader_free(batch_reader_1_p);
     fastq_batch_reader_free(batch_reader_2_p);
 
-    for (int i = 0; i < (num_gpu_devices + CPU_QC_WORKERS); i++) {
+    for (int i = 0; i < (num_gpu_devices + cpu_qc_calc_num_threads); i++) {
         free(qc_calc_server_input_p[i]);
     }
     free(qc_calc_server_input_p);

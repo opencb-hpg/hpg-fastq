@@ -7,6 +7,9 @@ COMMONS_CUDA_LIB = ./libs/commons-cuda
 CONTAINERS_LIB = ./libs/containers
 FASTQ_LIB = ./libs/bioformats/fastq
 
+#NVCC_DISCOVER = $(shell which nvcc | wc -l)
+NVCC_DISCOVER = $(shell expr `which nvcc | wc -l` \> 0)
+
 ALL = hpg-fastq
 
 CC = gcc
@@ -17,7 +20,12 @@ CFLAGS = -Wall -O3 -std=c99 -fopenmp
 CINCLUDES = -I. -I/opt/cuda/include -I$(FASTQ_LIB) -I$(COMMONS_LIB) -I$(COMMONS_CUDA_LIB) -I$(CONTAINERS_LIB)
 CUINCLUDES = -I. -I$(FASTQ_LIB) -I$(COMMONS_LIB) -I$(COMMONS_CUDA_LIB) -I$(CONTAINERS_LIB)
 
-NVCC = nvcc
+ifeq ($(NVCC_DISCOVER), 1)
+	NVCC = nvcc
+else
+	NVCC = gcc
+endif
+
 NVCCFLAGS = -g -G -Xptxas -v  -arch=sm_20 -Xcompiler -fopenmp
 #NVCCFLAGS = -g -G -Xptxas -v  -arch=sm_12
 
@@ -28,25 +36,25 @@ hpg-fastq: fastq_hpc_main.o prepro.o prepro_kernel_cuda.o cuda_commons.o hpg-fas
 		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro.o chaos_game.o -o $(BIN)/hpg-fastq
 
 file_utils.o: $(COMMONS_LIB)/file_utils.h
-	$(CC) $(CFLAGS) -c $(COMMONS_LIB)/file_utils.c
+	$(CC) $(CFLAGS) -DCUDA_VERSION -c $(COMMONS_LIB)/file_utils.c
 
 system_utils.o: $(COMMONS_LIB)/system_utils.h
-	$(CC) $(CFLAGS) -c $(COMMONS_LIB)/system_utils.c
+	$(CC) $(CFLAGS) -DCUDA_VERSION -c $(COMMONS_LIB)/system_utils.c
 
 string_utils.o: $(COMMONS_LIB)/string_utils.h $(COMMONS_LIB)/string_utils.c
-	$(CC) $(CFLAGS) -c $(COMMONS_LIB)/string_utils.c
+	$(CC) $(CFLAGS) -DCUDA_VERSION -c $(COMMONS_LIB)/string_utils.c
 
 log.o: $(COMMONS_LIB)/log.h $(COMMONS_LIB)/log.c string_utils.o
-	$(CC) $(CFLAGS) -c $(COMMONS_LIB)/log.c
+	$(CC) $(CFLAGS) -DCUDA_VERSION -c $(COMMONS_LIB)/log.c
 
 prepro.o: prepro.cu prepro.h *.h
-	$(NVCC) $(NVCCFLAGS) $(CUINCLUDES) -c prepro.cu
+	$(NVCC) $(NVCCFLAGS) $(CUINCLUDES) -DCUDA_VERSION -c prepro.cu
 
 prepro_kernel_cuda.o: prepro_kernel_cuda.cu *.h
-	$(NVCC) $(NVCCFLAGS) $(CUINCLUDES) -c prepro_kernel_cuda.cu
+	$(NVCC) $(NVCCFLAGS) $(CUINCLUDES) -DCUDA_VERSION -c prepro_kernel_cuda.cu
 
 cuda_commons.o: $(COMMONS_CUDA_LIB)/cuda_commons.cu $(COMMONS_CUDA_LIB)/cuda_commons.h *.h
-	$(NVCC) $(NVCCFLAGS) -c $(COMMONS_CUDA_LIB)/cuda_commons.cu
+	$(NVCC) $(NVCCFLAGS) -DCUDA_VERSION -c $(COMMONS_CUDA_LIB)/cuda_commons.cu
 
 fastq_hpc_main.o: fastq_hpc_main.c *.h
 	$(CC) $(CFLAGS) $(CINCLUDES) -DCUDA_VERSION -c fastq_hpc_main.c

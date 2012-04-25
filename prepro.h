@@ -135,7 +135,7 @@ typedef struct writer_server_input {
 *  Performs qc, preprocessing and/or filtering of a fastq single end file.
 *  Inside the functions the needed threads are set up and launched 
 */
-void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input);
+void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input);
 
 /**
 *  @brief Performs qc, preprocessing and/or filtering of a fastq paired end file
@@ -172,6 +172,6 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
 *  Performs qc, preprocessing and/or filtering of a fastq paired end file.
 *  Inside the functions the needed threads are set up and launched
 */
-void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, char* filename1, char* filename2, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input);
+void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename1, char* filename2, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input);
 
 #endif
