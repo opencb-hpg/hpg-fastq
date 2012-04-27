@@ -261,6 +261,13 @@ void chaos_game_load_table_gs(chaos_game_data_t* chaos_game_data_p, char* gs_fil
     strncpy(header_gs->gs_filename, gs_filename, 180);
     chaos_game_data_p->ref_word_count = header_gs->ref_word_count;
 
+// printf("gs_filename: %s ............\n", gs_filename);
+// printf("chaos_game_data_p->fq_word_count: %i\n", chaos_game_data_p->fq_word_count);
+// printf("header_gs->dim_x: %u, header_gs->dim_y: %u\n", header_gs->dim_x, header_gs->dim_y);
+// printf("header_gs->gs_filename: %s\n", header_gs->gs_filename);
+// printf("header_gs->ref_word_count: %u\n", header_gs->ref_word_count);
+// printf("header_gs->word_size_k: %u\n", header_gs->word_size_k);
+
     for (int i = 0; i < dim_n; i++) {
         fread(chaos_game_data_p->table_gs[i], dim_n, sizeof(int), gs_fd);
     }
@@ -279,6 +286,7 @@ unsigned int chaos_game_load_table_gs_direct(unsigned int** table_gs_p, int dim_
     }
 
     fread(header_gs, 1, sizeof(header_gs_t), gs_fd);
+
     strncpy(header_gs->gs_filename, gs_filename, 180);
     ref_word_count = header_gs->ref_word_count;
 
@@ -331,10 +339,9 @@ void chaos_game_calculate_table_dif(chaos_game_data_t* chaos_game_data_p) {
     for (int i = 0; i < dim_n; i++) {
         for (int j = 0; j < dim_n; j++) {
             chaos_game_data_p->table_dif[i][j] = (chaos_game_data_p->table_seq[i][j] * fq_norm) - (chaos_game_data_p->table_gs[i][j] * gs_norm);
-
+	    
             if (highest_value < chaos_game_data_p->table_dif[i][j]) highest_value = chaos_game_data_p->table_dif[i][j];
             if (lowest_value > chaos_game_data_p->table_dif[i][j]) lowest_value = chaos_game_data_p->table_dif[i][j];
-
         }
     }
 

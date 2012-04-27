@@ -5,9 +5,6 @@
 #include "commons.h"
 #include "fastq_batch.h"
 
-#define MIN_QUALITY_VALUE		10	//Normalized
-#define MAX_QUALITY_VALUE		70	//Normalized
-
 #define A 				1	//Numer of A's: ltrim (10), rtrim (10), total (12)
 #define C 				3	//Numer of C's: ltrim (10), rtrim (10), total (12)
 #define G 				7	//Numer of G's: ltrim (10), rtrim (10), total (12)

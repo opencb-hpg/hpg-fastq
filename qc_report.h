@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 #include "chaos_game.h"
-#include "qc_batch.h"
+#include "fastq_commons.h"
+#include "file_utils.h"
 
 #define QC_SUFFIX		".qc"
 #define CG_SUFFIX		".cg"
@@ -69,9 +70,9 @@ typedef struct qc_report {
     float n_perc;					/**< %N. */
   
     //Fields for chaos game
-    char pgm_fastq_filename[MAX_PGM_FILENAME_LENGTH];	/**< Filename of the fastq sequence file signature. */	
-    char pgm_quality_filename[MAX_PGM_FILENAME_LENGTH];	/**< Filename of the fastq quality file signature. */
-    char pgm_diff_filename[MAX_PGM_FILENAME_LENGTH];	/**< Filename of the normalized diff between fastq file and reference genome signature. */
+    char pgm_fastq_filename[MAX_FULL_PATH_LENGTH];	/**< Filename of the fastq sequence file signature. */	
+    char pgm_quality_filename[MAX_FULL_PATH_LENGTH];	/**< Filename of the fastq quality file signature. */
+    char pgm_diff_filename[MAX_FULL_PATH_LENGTH];	/**< Filename of the normalized diff between fastq file and reference genome signature. */
     int dim_n;						/**< Dimension of the tables (dim_n X dim_n). */
     int word_size_k;					/**< Word size. */
     unsigned int fq_word_count;				/**< Total read words. */

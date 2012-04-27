@@ -6,10 +6,11 @@
 #include <getopt.h>
 #include <unistd.h>
 
-#include "chaos_game.h"
 #include "commons.h"
+#include "fastq_commons.h"
 #include "log.h"
 #include "file_utils.h"
+#include "qc_batch.h"
 #include "string_utils.h"
 #include "system_utils.h"
 
@@ -654,11 +655,13 @@ int main(int argc, char **argv) {
     if (gpu_num_threads == DEFAULT_GPU_NUM_THREADS) {
         gpu_num_threads = get_optimal_gpu_num_threads();
     }
-    
+
     // if there is no kmers calculation cpu threads are used for qc calculations
     // remember: if kmers_flag is active cpu_qc_calc_num_threads equals 0
     if (!kmers_flag) {
         cpu_qc_calc_num_threads = cpu_num_threads;
+    } else if (gpu_num_threads == 0) {
+        cpu_qc_calc_num_threads = 1;
     }
 
     // number of rtrim nucleotides cannot be more than half the minumum read length
@@ -700,7 +703,11 @@ int main(int argc, char **argv) {
         start_timer(t1_total);
     }
 
-    gpu_num_blocks = (batch_size / 2 / gpu_num_threads) + 1;
+    if (gpu_num_threads > 0) {
+        gpu_num_blocks = (batch_size / 2 / gpu_num_threads) + 1;
+    } else {
+        gpu_num_blocks = 16;
+    }
 
     if (fastq_input != NULL) {
         kernel_prepro_fastq_single_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, cpu_qc_calc_num_threads, fastq_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);

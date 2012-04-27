@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "qc_report.h"
-#include "file_utils.h"
 
 /* **********************************************
  *    		Private functions  		*
@@ -495,11 +494,20 @@ qc_graph_t* set_qc_graph_default_values(qc_graph_t* qc_graph) {
 
 void generate_gnuplot_image(qc_graph_t qc_graph, char* data_filename, char* graph_filename) {
   
-  printf("data_filename: %s\n", data_filename);
-  printf("graph_filename: %s\n", graph_filename);
-  
+  //printf("data_filename: %s\n", data_filename);
+  //printf("graph_filename: %s\n", graph_filename);
+
+//   for (int i = 0; i < 10; i++) {
+//       FILE* test_fd = popen("ls", "w");
+//       //FILE* test_fd = fopen("/tmp/prueba.txt", "w");
+//       printf("test_fd number %i open OK...\n", i);
+//       pclose(test_fd);
+//       //fclose(test_fd);
+//       printf("test_fd number %i closed OK...\n", i);
+//   }
+
   //FILE *graph_fd = popen("display", "w");
-//  FILE *graph_fd = popen("gnuplot -persist", "w");
+  //FILE *graph_fd = popen("gnuplot -persist", "w");
   //printf("closing graph_fd %x...\n", graph_fd);
   //pclose(graph_fd);
   //printf("closing graph_fd %x done !!\n", graph_fd);
@@ -512,7 +520,13 @@ void generate_gnuplot_image(qc_graph_t qc_graph, char* data_filename, char* grap
     //FILE* graph_fd = (FILE*)calloc(1, sizeof(FILE));
     //memcpy(graph_fd, graph_fd_aux, sizeof(FILE));
     
-    FILE* graph_fd = popen("gnuplot -persist", "w");    
+    FILE* graph_fd = popen("gnuplot -persist", "w");
+    
+    if (graph_fd == NULL) {
+        LOG_FATAL("Opening of file descriptor for gnuplot execution failed\n");
+        return;
+    }
+    
     //FILE* graph_other = fopen("/tmp/prueba.txt", "w");
     //fclose(graph_other);
     //return;

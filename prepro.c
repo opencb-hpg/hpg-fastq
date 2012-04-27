@@ -2,21 +2,14 @@
 #ifndef PREPRO_CU
 #define PREPRO_CU
 
-extern "C" {
-    #include "fastq_batch_reader.h"
-    #include "fastq_read.h"
+#include "chaos_game.h"
+#include "fastq_batch_reader.h"
+#include "fastq_read.h"
+#include "qc_batch.h"
+#include "prepro.h"
+#include "prepro_batch.h"
+#include "prepro_kernel_omp.h"
 
-    #include "chaos_game.h"
-    #include "qc_batch.h"
-    //#include "qc_report.h"
-    #include "prepro.h"
-    #include "prepro_batch.h"
-    #include "prepro_kernel_omp.h"
-}
-
-#ifdef CUDA_VERSION
-    #include "prepro_kernel_cuda.h"
-#endif
 
 #define BLOCK_SIZE  16
 
@@ -98,94 +91,21 @@ void* qc_calc_server(void* params_p) {
                 memset(gpu_kmers_invalid_p, 0, KMERS_COMBINATIONS * sizeof(qc_kmers_t));
             }
 
-            #ifdef CUDA_VERSION
-            if (input_p->gpu_device_id[0] < input_p->num_gpu_devices) {
-                LOG_DEBUG("qc calculation on GPU thread...\n");
+            // calculation in CPU
+            LOG_DEBUG("qc calculation on CPU thread...\n");
 
-                // selecting GPU device
-                CUDA_SAFE_CALL(cudaSetDevice(input_p->gpu_device_id[0]));
+            mean_batch_size += fastq_batch_list_item_p->batch_p->data_size;
 
-                CUDA_SAFE_CALL(cudaHostAlloc((void**) &d_seq_p, (unsigned int) fastq_batch_list_item_p->batch_p->data_size / 2, 0));
-                CUDA_SAFE_CALL(cudaHostAlloc((void**) &d_quality_p, (unsigned int) fastq_batch_list_item_p->batch_p->data_size / 2, 0));
-                CUDA_SAFE_CALL(cudaHostAlloc((void**) &d_data_indices_p, (unsigned int) fastq_batch_list_item_p->batch_p->data_indices_size, 0));
-                CUDA_SAFE_CALL(cudaHostAlloc((void**) &d_gpu_result_p, (unsigned int) fastq_batch_list_item_p->batch_p->num_reads * sizeof(qc_read_t), 0));
+            //if (time_flag) { start_timer(t1_cpu); }
 
-                CUDA_SAFE_CALL(cudaMemset((void*) d_gpu_result_p, 0, fastq_batch_list_item_p->batch_p->num_reads * sizeof(qc_read_t)));
-
-                mean_batch_size += fastq_batch_list_item_p->batch_p->data_size;
-
-                CUDA_SAFE_CALL(cudaMemcpy(d_seq_p, fastq_batch_list_item_p->batch_p->seq, fastq_batch_list_item_p->batch_p->data_size / 2, cudaMemcpyHostToDevice));
-                CUDA_SAFE_CALL(cudaMemcpy(d_quality_p, fastq_batch_list_item_p->batch_p->quality, fastq_batch_list_item_p->batch_p->data_size / 2, cudaMemcpyHostToDevice));
-                CUDA_SAFE_CALL(cudaMemcpy(d_data_indices_p, fastq_batch_list_item_p->batch_p->data_indices, fastq_batch_list_item_p->batch_p->data_indices_size, cudaMemcpyHostToDevice));
-
-                int num_blocks = (fastq_batch_list_item_p->batch_p->num_reads / input_p->num_threads) + 1;
-
-                dim3 dimBlock(input_p->num_threads, 1, 1);
-                dim3 dimGrid(num_blocks, 1, 1);
-                int shared_memory = fastq_batch_list_item_p->batch_p->num_reads * COUNTERS_SIZE * sizeof(int);
-
-                CUDA_START_TIMER();
-
-                // if trim and filter quality is the same we only calculate it once
-                if ((input_p->ltrim_nts == input_p->lfilter_nts) && (input_p->rtrim_nts == input_p->rfilter_nts)) {
-                    kernel_prepro <<< dimGrid, dimBlock>>>(d_data_indices_p, d_seq_p, d_quality_p, d_gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
-                } else {
-                    kernel_prepro <<< dimGrid, dimBlock>>>(d_data_indices_p, d_seq_p, d_quality_p, d_gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->rfilter_nts, input_p->lfilter_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
-                }
-
-                CUDA_STOP_TIMER();
-                CUDA_SAFE_CALL(cudaThreadSynchronize());
-
-                // ---------------- GREP kernel call ---------------------------------
-
-                //char match_p[100] = "GGGTTTTCCTGAAAAAGGGA";
-                //char match_p[100] = "GGGTTTTCCTGAA";
-                //char match_p[100] = "TAGATATTTTTGTTTT";
-                //char match_p[100] = "ACTGAAGT";
-                //
-                //char* d_match_p;
-                //int match_length = strlen(match_p);
-                //
-                //CUDA_SAFE_CALL( cudaHostAlloc((void**) &d_match_p, (unsigned int) match_length, 0) );
-                //CUDA_SAFE_CALL( cudaMemcpy(d_match_p, match_p, match_length, cudaMemcpyHostToDevice) );
-                //kernel_grep<<<dimGrid, dimBlock>>>(d_data_p, d_data_indices_p, d_match_p, match_length, fastq_batch_list_item_p->batch_p->num_reads);
-                //manageCudaError();
-                //CUDA_SAFE_CALL( cudaThreadSynchronize() );
-                //CUDA_SAFE_CALL( cudaMemcpy(match_p, d_match_p, match_length, cudaMemcpyDeviceToHost) );
-                ////printf("returned match_p: %c\n", match_p[2]);
-                //CUDA_SAFE_CALL( cudaFreeHost(d_match_p) );
-                //exit(0);
-
-                // ---------------- GREP kernel call ---------------------------------
-
-                // copy result from GPU (GPU -> CPU)
-                CUDA_SAFE_CALL(cudaMemcpy(gpu_result_p, d_gpu_result_p, sizeof(qc_read_t) * fastq_batch_list_item_p->batch_p->num_reads, cudaMemcpyDeviceToHost));
-
-                // free memory allocations
-                CUDA_SAFE_CALL(cudaFreeHost(d_seq_p));
-                CUDA_SAFE_CALL(cudaFreeHost(d_quality_p));
-                CUDA_SAFE_CALL(cudaFreeHost(d_data_indices_p));
-                CUDA_SAFE_CALL(cudaFreeHost(d_gpu_result_p));
+            // if trim and filter quality is the same we only calculate it once
+            if ((input_p->ltrim_nts == input_p->lfilter_nts) && (input_p->rtrim_nts == input_p->rfilter_nts)) {
+                cpu_prepro_trim(fastq_batch_list_item_p->batch_p->data_indices, fastq_batch_list_item_p->batch_p->seq, fastq_batch_list_item_p->batch_p->quality, gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
             } else {
-	    #endif
-
-                LOG_DEBUG("qc calculation on CPU thread...\n");
-
-                mean_batch_size += fastq_batch_list_item_p->batch_p->data_size;
-
-                //if (time_flag) { start_timer(t1_cpu); }
-
-                // if trim and filter quality is the same we only calculate it once
-                if ((input_p->ltrim_nts == input_p->lfilter_nts) && (input_p->rtrim_nts == input_p->rfilter_nts)) {
-                    cpu_prepro_trim(fastq_batch_list_item_p->batch_p->data_indices, fastq_batch_list_item_p->batch_p->seq, fastq_batch_list_item_p->batch_p->quality, gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
-                } else {
-                    cpu_prepro_filter_trim(fastq_batch_list_item_p->batch_p->data_indices, fastq_batch_list_item_p->batch_p->seq, fastq_batch_list_item_p->batch_p->quality, gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->rfilter_nts, input_p->lfilter_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
-                }
-
-                //if (time_flag) { stop_timer(t1_cpu, t2_cpu, cpu_time); }
-            #ifdef CUDA_VERSION
+                cpu_prepro_filter_trim(fastq_batch_list_item_p->batch_p->data_indices, fastq_batch_list_item_p->batch_p->seq, fastq_batch_list_item_p->batch_p->quality, gpu_result_p, fastq_batch_list_item_p->batch_p->num_reads, input_p->min_quality, input_p->max_quality, input_p->rtrim_nts, input_p->ltrim_nts, input_p->rfilter_nts, input_p->lfilter_nts, input_p->begin_quality_nt, input_p->end_quality_nt);
             }
-	    #endif
+
+            //if (time_flag) { stop_timer(t1_cpu, t2_cpu, cpu_time); }
 
             // create a new qc_batch object
             qc_batch_p = (qc_batch_t*) malloc(sizeof(qc_batch_t));
@@ -204,7 +124,7 @@ void* qc_calc_server(void* params_p) {
             list_insert_item(item_p, &qc_batch_list);
 
             // free the current batch item
-            fastq_batch_list_item_free(fastq_batch_list_item_p, false);
+            fastq_batch_list_item_free(fastq_batch_list_item_p, 0);
 
             sprintf(log_message, "Thread-GPU:...processing for batch %i done !\n", qc_batch_p->id);
             LOG_DEBUG(log_message);
@@ -483,11 +403,11 @@ void* results_server(void* params_p) {
                 if (qc_batch_p->gpu_result_p != NULL) {
                     free(qc_batch_p->gpu_result_p);
                 }
-                qc_batch_free(qc_batch_p, false);
+                qc_batch_free(qc_batch_p, 0);
             } else {
                 int sid = qc_batch_p->source_id;
-                qc_batch_free(qc_batch_p, true);
-                status_batch_free(status_batch_p, true);
+                qc_batch_free(qc_batch_p, 1);
+                status_batch_free(status_batch_p, 1);
             }
 
             if (time_flag) {
@@ -516,7 +436,7 @@ void* results_server(void* params_p) {
 
     // after chaos game calculations its structures must be freed
     // qc_report is also filled with the necesary data for the report
-    if (cg_flag) {
+    if ((input_p->qc_step) && (cg_flag)) {
         if (time_flag) {
             start_timer(t1_chaos_game);
         }
@@ -527,6 +447,7 @@ void* results_server(void* params_p) {
             //chaos_game_print_table(chaos_game_data_valid_p[n]->table_q, chaos_game_data_valid_p[n]->dim_n);
             chaos_game_data_valid_p[n]->table_gs = chaos_game_data_valid_p[0]->table_gs;
             chaos_game_data_valid_p[n]->ref_word_count = chaos_game_data_valid_p[0]->ref_word_count;
+	    
             chaos_game_calculate_table_dif(chaos_game_data_valid_p[n]);  //calculate diff table between fastq sequences and the reference
 
             if (chaos_game_validate_table_dif(chaos_game_data_valid_p[n])) { //if diff table is not valid then generate files and images
@@ -649,7 +570,7 @@ void* writer_single_end_server(void* params_p) {
             }
 
             // free ALL memory
-            status_batch_free(status_batch_p, true);
+            status_batch_free(status_batch_p, 1);
 
             if (time_flag) {
                 stop_timer(t1_write, t2_write, write_time);
@@ -796,14 +717,14 @@ void* writer_paired_end_server(void* params_p) {
 
             // free ALL memory
             if (reads_1 == processed_reads_1) {
-                status_batch_free(status_batch_1_p, true);
+                status_batch_free(status_batch_1_p, 1);
                 status_batch_1_p = NULL;
                 processed_reads_1 = 0;
                 batch1_count++;
             }
 
             if (reads_2 == processed_reads_2) {
-                status_batch_free(status_batch_2_p, true);
+                status_batch_free(status_batch_2_p, 1);
                 status_batch_2_p = NULL;
                 processed_reads_2 = 0;
                 batch2_count++;
@@ -844,28 +765,9 @@ void* writer_paired_end_server(void* params_p) {
  * *************************************************************************************/
 
 void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
-    int num_gpu_devices;
-
-    #ifdef CUDA_VERSION
-    cudaError_t cudaResultCode = cudaGetDeviceCount(&num_gpu_devices);
-    if (cudaResultCode != cudaSuccess) {
-        num_gpu_devices = 0;
-    }
-    #else
-    num_gpu_devices = 0;
-    #endif
+    int num_gpu_devices = 0;
 
     gpus_thread_alive = num_gpu_devices + cpu_qc_calc_num_threads;
-
-    #ifdef CUDA_VERSION
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0);
-    if (!prop.canMapHostMemory) {
-        char log_message[100];
-        sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
-        LOG_FATAL(log_message);
-    }
-    #endif
 
     int num_total_threads = num_blocks * num_threads;
 
@@ -1011,30 +913,9 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
  * *************************************************************************************/
 
 void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename1, char* filename2, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
-    int num_gpu_devices;
-
-    #ifdef CUDA_VERSION
-    cudaError_t cudaResultCode = cudaGetDeviceCount(&num_gpu_devices);
-    if (cudaResultCode != cudaSuccess) {
-        num_gpu_devices = 0;
-    }
-    #else
-    num_gpu_devices = 0;
-    #endif
+    int num_gpu_devices = 0;
 
     gpus_thread_alive = num_gpu_devices + cpu_qc_calc_num_threads;
-
-    #ifdef CUDA_VERSION
-    cudaDeviceProp prop;
-
-    CUDA_SAFE_CALL(cudaGetDeviceProperties(&prop, 0);)
-
-    if (!prop.canMapHostMemory) {
-        char log_message[50];
-        sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
-        LOG_FATAL(log_message);
-    }
-    #endif
 
     int num_total_threads = num_blocks * num_threads;
 
