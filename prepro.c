@@ -396,6 +396,9 @@ void* results_server(void* params_p) {
                 }
             }
 
+            sprintf(log_message, "Thread-RESULTS: ...processing for batch %i done!\n", qc_batch_p->id);
+            LOG_DEBUG(log_message);
+
             // if preprocessing of filtering is enable reads are maintained in memory and status batch is inserted in the list
             // otherwise we free all resources since writer thread is not going to be run
             if ((input_p->prepro_step) || (input_p->filter_step)) {
@@ -413,9 +416,6 @@ void* results_server(void* params_p) {
             if (time_flag) {
                 stop_timer(t1_result, t2_result, result_time);
             }
-
-            sprintf(log_message, "Thread-RESULTS: ...processing for batch %i done!\n", qc_batch_p->id);
-            LOG_DEBUG(log_message);
         } //end of if-else
 
         // getting gpus thread status

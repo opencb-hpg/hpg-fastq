@@ -7,6 +7,7 @@ CONTAINERS_LIB = ./libs/containers
 FASTQ_LIB = ./libs/bioformats/fastq
 
 NVCC_DISCOVER = $(shell expr `which nvcc | wc -l` \> 0)
+#CUDA_LIB_PATH = $(shell echo -L$LD_LIBRARY_PATH"lib" | sed 's/:/ -L/g')
 
 ALL = hpg-fastq
 
@@ -21,6 +22,7 @@ CUINCLUDES = -I. -I$(FASTQ_LIB) -I$(COMMONS_LIB) -I$(COMMONS_CUDA_LIB) -I$(CONTA
 NVCC = nvcc
 
 NVCCFLAGS = -g -G -Xptxas -v  -arch=sm_20 -Xcompiler -fopenmp
+#NVCCFLAGS = -O -Xptxas -v  -arch=sm_20 -Xcompiler -fopenmp
 #NVCCFLAGS = -g -G -Xptxas -v  -arch=sm_12
 
 all: $(ALL)
@@ -31,8 +33,8 @@ CUDA_OBJECTS = prepro_kernel_cuda.o cuda_commons.o
 endif
 
 hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o $(CUDA_OBJECTS)
-	$(CC) $(CFLAGS) fastq_hpc_main.o string_utils.o file_utils.o system_utils.o log.o list.o prepro_kernel_omp.o qc_report.o fastq_file.o fastq_read.o \
-		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o $(CUDA_OBJECTS) -o $(BIN)/hpg-fastq -L/opt/cuda/lib64/ -lcudart
+	$(NVCC) $(NVCCFLAGS) fastq_hpc_main.o string_utils.o file_utils.o system_utils.o log.o list.o prepro_kernel_omp.o qc_report.o fastq_file.o fastq_read.o \
+		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o $(CUDA_OBJECTS) -o $(BIN)/hpg-fastq
 
 ifeq ($(NVCC_DISCOVER), 1)
 prepro.o: prepro.cu prepro.h *.h

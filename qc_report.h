@@ -137,10 +137,7 @@ void qc_report_get_values_from_chaos_game(chaos_game_data_t* chaos_game_data_p, 
 */
 void generate_report(qc_report_t qc_report, char* inputfilename, int base_quality, int kmers_on, int cg_flag, char* report_directory, int valid);
 
-//void plot_nt_quality_public(char* data_filename, char* graph_filename);
-
 #endif	/*  QC_REPORT_H	  */
-
 
 
 
