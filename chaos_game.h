@@ -2,9 +2,9 @@
 #ifndef CHAOS_GAME_H
 #define CHAOS_GAME_H
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include <unistd.h>
 

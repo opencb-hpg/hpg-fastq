@@ -39,10 +39,8 @@ hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o $(CUDA_OBJ
 else
 hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) fastq_hpc_main.o string_utils.o file_utils.o system_utils.o log.o list.o prepro_kernel_omp.o qc_report.o fastq_file.o fastq_read.o \
-		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o -o $(BIN)/hpg-fastq -L/opt/cuda/lib64 -lcudart
+		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o -o $(BIN)/hpg-fastq -lm
 endif
-
-
 
 ifeq ($(NVCC_DISCOVER), 1)
 prepro.o: prepro.cu prepro.h *.h

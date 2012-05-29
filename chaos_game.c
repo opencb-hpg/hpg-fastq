@@ -367,7 +367,7 @@ int chaos_game_validate_table_dif(chaos_game_data_t* chaos_game_data_p) {
 
     mean_table_dif_value /= (double)(1.0 * dim_n * dim_n);
 
-    //calculation of the standard deviation
+    //calculation of the standard deviation    
     for (int i = 0; i < dim_n; i++) {
         for (int j = 0; j < dim_n; j++) {
             standard_deviation_table_dif_value += pow((chaos_game_data_p->table_dif[i][j] - mean_table_dif_value), 2);
@@ -527,6 +527,12 @@ void chaos_game_generate_pgm_file_(unsigned int** table, int dim_n, double norm,
     } else {
         dif_k = MIN_K_IMAGE_VALUE - k_cg;
         zoom_factor = pow(2, dif_k); //zoom_factor = 2 ^ dif_k
+        
+        //zoom_factor = 2 ^ dif_k
+//         zoom_factor = 1;
+//         for (int i = 0; i < dif_k; i++) {
+//             zoom_factor *= 2; 
+//         }
 
         for (int i = 0; i < dim_n; i++) {
             for (int j = 0; j < dim_n; j++) {
