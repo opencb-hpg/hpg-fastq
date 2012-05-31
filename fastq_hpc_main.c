@@ -199,7 +199,6 @@ int main(int argc, char **argv) {
             argv_from_file_options = parse_conf_file(argv[i+1]);
             int num_conf_lines = count_lines(argv[i+1]);
             argv_with_file_options = (char **)malloc((argc + 2 * num_conf_lines) * sizeof(char *));
-            int i = array_concat(argv_with_file_options, argc, (const char**)argv, 2 * num_conf_lines, (const char**)argv_from_file_options);
 
             char str1[1024];
             strcpy(str1, "Command line: ");
@@ -456,7 +455,7 @@ int main(int argc, char **argv) {
                 // if gets a different value from conf file we do not enter
                 if (batch_size == DEFAULT_BATCH_SIZE_MB * 1000000) {
                     if (is_numeric(optarg) != 0) {
-                        sscanf(optarg, "%i", &batch_size);
+                        sscanf(optarg, "%lu", &batch_size);
 
                         // batch-size > 64MB
                         if (batch_size < 64) {
@@ -606,7 +605,7 @@ int main(int argc, char **argv) {
     if (fastq2_input != NULL) strcat(fastq_options, fastq2_input);
 
     // single-end and paired-end options are exclusive (fastq)
-    if (fastq_input != NULL && fastq1_input != NULL || fastq_input != NULL && fastq2_input != NULL) {
+    if ((fastq_input != NULL) && (fastq1_input != NULL || fastq2_input != NULL)) {
         printf(FASTQ_HPC_TOOLS_USAGE);
         LOG_FATAL("single-end and paired-end options are exclusive, use --fastq OR --fastq1/--fastq2 options, not both\n");
     }

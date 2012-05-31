@@ -24,8 +24,6 @@ void qc_batch_free(qc_batch_t* qc_batch_p, int all) {
 }
 
 void qc_kmers_init(qc_kmers_t* qc_kmers_p) {
-    char kmer[6];
-
     for (int i = 0; i < KMERS_COMBINATIONS; i++) {
         qc_kmers_p[i].id = i;
         qc_kmers_p[i].total_count = 0;

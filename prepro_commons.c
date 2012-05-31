@@ -65,7 +65,7 @@ void filtering_read(int i, int read_length, results_server_input_t* input_p, qc_
 }
 
 void qc_per_read(int i, int length, int base_quality, int* mean_read_quality, long* read_sum_length, results_server_input_t* input_p, qc_batch_t* qc_batch_p, status_batch_t* status_batch_p, qc_report_t* qc_report, int cpu_num_threads) {
-    int k, index, counters_a, counters_c, counters_g, counters_t, counters_n;
+    int index, counters_a, counters_c, counters_g, counters_t, counters_n;
     int source_id = qc_batch_p->source_id;
 
     if (length > 0) {
@@ -126,7 +126,7 @@ void qc_per_read(int i, int length, int base_quality, int* mean_read_quality, lo
         qc_report[source_id].gc_histogram[100 * (counters_g + counters_c)/(counters_a + counters_c + counters_g + counters_t + counters_n)]++;
 
         // intervals of nt count must be calculated depending on the read status
-        int length_after_trims, init_pos, end_pos, end_kmers_pos;
+        int length_after_trims, init_pos, end_pos;
 
         if (status_batch_p->read_status[i] == RTRIM_READ) {
             length_after_trims = length - input_p->rtrim_nts;

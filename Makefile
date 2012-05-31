@@ -56,8 +56,14 @@ prepro.o: prepro.c prepro.h *.h
 	$(CC) $(CFLAGS) $(CINCLUDES) -c prepro.c
 endif
 
+ifeq ($(NVCC_DISCOVER), 1)
 system_utils.o: $(COMMONS_LIB)/system_utils.h
 	$(CC) $(CFLAGS) $(CINCLUDES) -DCUDA_VERSION -c $(COMMONS_LIB)/system_utils.c
+else
+system_utils.o: $(COMMONS_LIB)/system_utils.h
+	$(CC) $(CFLAGS) $(CINCLUDES) -c $(COMMONS_LIB)/system_utils.c
+endif
+
 
 fastq_hpc_main.o: fastq_hpc_main.c *.h
 	$(CC) $(CFLAGS) $(CINCLUDES) -c fastq_hpc_main.c

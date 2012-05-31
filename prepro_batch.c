@@ -94,8 +94,6 @@ status_batch_t* status_batch_list_get_next_by_id(status_batch_list_t* list_p, in
 }
 
 void status_batch_list_print(status_batch_list_t* list_p) {
-    int nt_count;
-
     pthread_mutex_lock(&list_p->lock);
 
     printf("Number of items: %i\n", list_p->length);

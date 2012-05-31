@@ -444,7 +444,7 @@ void* results_server(void* params_p) {
             if (time_flag) {
                 stop_timer(t1_kmers, t2_kmers, kmers_time);
             }
-            printf("qc_report_invalid[0].nb_reads: %i, qc_report_valid[0].nb_reads: %i\n", qc_report_invalid[0].nb_reads, qc_report_valid[0].nb_reads);
+            printf("qc_report_invalid[0].nb_reads: %lu, qc_report_valid[0].nb_reads: %lu\n", qc_report_invalid[0].nb_reads, qc_report_valid[0].nb_reads);
 
             if (time_flag) {
                 start_timer(t1_result);
@@ -862,7 +862,7 @@ void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_
     cudaGetDeviceProperties(&prop, 0);
     if (!prop.canMapHostMemory) {
         char log_message[100];
-        sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
+        sprintf(log_message, "device does not support MapHostMemory: %i\n", prop.canMapHostMemory);
         LOG_FATAL(log_message);
     }
     #endif
@@ -1031,7 +1031,7 @@ void kernel_prepro_fastq_paired_end(size_t batch_size, int max_fastq_batch_list_
 
     if (!prop.canMapHostMemory) {
         char log_message[50];
-        sprintf(log_message, "device does not support MapHostMemory: %s\n", prop.canMapHostMemory);
+        sprintf(log_message, "device does not support MapHostMemory: %i\n", prop.canMapHostMemory);
         LOG_FATAL(log_message);
     }
     #endif

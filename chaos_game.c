@@ -148,10 +148,9 @@ void chaos_game_fill_tables(chaos_game_data_t* chaos_game_data_p, status_batch_t
     unsigned int acc_word_quality = 0;
     int co_x, co_y;
     double f_x, f_y;
-    char character, read_character, quality_character;
+    char quality_character;
     char* seq;
     char* quality;
-    long int* int_data;
     fastq_batch_t* read_p;
 
     read_p = batch_p->read_p;
@@ -390,7 +389,7 @@ void chaos_game_write_table_images(chaos_game_data_t* chaos_game_data_p, char* f
     char pgm_filename[MAX_PGM_FILENAME_LENGTH];
     char fq_filename[MAX_PGM_FILENAME_LENGTH];
     char log_message[200];
-    double fq_norm, q_norm, gs_norm;  //Normalization factors for fastq sequences, qualities and genomic signature of the reference sequence
+    double fq_norm, q_norm;  //Normalization factors for fastq sequences, qualities and genomic signature of the reference sequence
 
     int dim_n = chaos_game_data_p->dim_n;
 
@@ -415,7 +414,7 @@ void chaos_game_write_table_images(chaos_game_data_t* chaos_game_data_p, char* f
         LOG_FATAL("Error in fastq sequences normalization, aborting execution\n");
     }
 
-    chaos_game_generate_pgm_file_(chaos_game_data_p->table_seq, chaos_game_data_p->dim_n, fq_norm, chaos_game_data_p->word_size_k, pgm_filename);
+    chaos_game_generate_pgm_file_(chaos_game_data_p->table_seq, dim_n, fq_norm, chaos_game_data_p->word_size_k, pgm_filename);
 
     //Genomic Signature for qualities
     sprintf(pgm_filename, "%s%s", pgm_base_filename, QUALITY_PGM_FILENAME_SUFFIX);
@@ -429,7 +428,7 @@ void chaos_game_write_table_images(chaos_game_data_t* chaos_game_data_p, char* f
 
     q_norm = 256.0 / MAX_QUALITY_IN_TABLE;
 
-    chaos_game_generate_pgm_file_(chaos_game_data_p->table_q, chaos_game_data_p->dim_n , q_norm, chaos_game_data_p->word_size_k, pgm_filename);
+    chaos_game_generate_pgm_file_(chaos_game_data_p->table_q, dim_n , q_norm, chaos_game_data_p->word_size_k, pgm_filename);
 
 
     //Genomic Signature for difference matrix between fastq sequences and reference genome
@@ -442,7 +441,7 @@ void chaos_game_write_table_images(chaos_game_data_t* chaos_game_data_p, char* f
     chaos_game_absolute_diff_table_(chaos_game_data_p);
 
     //cast to unsigned int without no conflict, all values are greater than 0
-    chaos_game_generate_pgm_file_((unsigned int**) chaos_game_data_p->table_dif, chaos_game_data_p->dim_n, 1, chaos_game_data_p->word_size_k, pgm_filename);
+    chaos_game_generate_pgm_file_((unsigned int**) chaos_game_data_p->table_dif, dim_n, 1, chaos_game_data_p->word_size_k, pgm_filename);
 }
 
 void chaos_game_print_table(unsigned int** table, int dim_n) {
@@ -476,7 +475,6 @@ void chaos_game_normalize_quality_table_(chaos_game_data_t* chaos_game_data_p) {
 void chaos_game_absolute_diff_table_(chaos_game_data_t* chaos_game_data_p) {
     int dif_value;
     int dim_n = chaos_game_data_p->dim_n;
-    int word_size = chaos_game_data_p->word_size_k;
 
     for (int i = 0; i < dim_n; i++) {
         for (int j = 0; j < dim_n; j++) {
