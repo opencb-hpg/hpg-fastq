@@ -13,6 +13,7 @@ ALL = hpg-fastq
 
 CC = gcc
 CFLAGS = -Wall -O3 -std=c99 -fopenmp
+#CFLAGS = -Wall -O0 -g -std=c99 -fopenmp
 #CFLAGS = -DVERBOSE_DBG -Wall
 #CFLAGS = -Wall -pg
 
