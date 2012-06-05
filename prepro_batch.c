@@ -127,6 +127,10 @@ void status_batch_free(status_batch_t* status_batch_p, int all) {
 
     if (all) {
         if (status_batch_p->read_status != NULL) free(status_batch_p->read_status);
+        status_batch_p->read_status = NULL;
+
+        if (status_batch_p->read_p != NULL) fastq_batch_free(status_batch_p->read_p);
+        status_batch_p->read_p = NULL;
     }
     free(status_batch_p);
 }

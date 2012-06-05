@@ -405,11 +405,12 @@ void* results_server(void* params_p) {
                 status_batch_list_insert(status_batch_p, &status_batch_list);
                 if (qc_batch_p->gpu_result_p != NULL) {
                     free(qc_batch_p->gpu_result_p);
+                    qc_batch_p->gpu_result_p = NULL;
                 }
                 qc_batch_free(qc_batch_p, 0);
             } else {
                 int sid = qc_batch_p->source_id;
-                qc_batch_free(qc_batch_p, 1);
+                qc_batch_free(qc_batch_p, 0);
                 status_batch_free(status_batch_p, 1);
             }
 

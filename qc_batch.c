@@ -13,14 +13,23 @@ void qc_batch_free(qc_batch_t* qc_batch_p, int all) {
     if (qc_batch_p == NULL) return;
 
     if (all) {
-        if (qc_batch_p->read_p != NULL) fastq_batch_free(qc_batch_p->read_p); //free(qc_batch_p->read_p);
-        if (qc_batch_p->gpu_result_p != NULL) free(qc_batch_p->gpu_result_p);
-        if (qc_batch_p->gpu_nt_type_valid_counter_p != NULL) free(qc_batch_p->gpu_nt_type_valid_counter_p);
-        if (qc_batch_p->gpu_nt_type_invalid_counter_p != NULL) free(qc_batch_p->gpu_nt_type_invalid_counter_p);
-        if (qc_batch_p->gpu_kmers_valid_p != NULL) free(qc_batch_p->gpu_kmers_valid_p);
-        if (qc_batch_p->gpu_kmers_invalid_p != NULL) free(qc_batch_p->gpu_kmers_invalid_p);
+        if (qc_batch_p->read_p != NULL) fastq_batch_free(qc_batch_p->read_p);
+        qc_batch_p->read_p = NULL;
     }
+    
+    if (qc_batch_p->gpu_result_p != NULL) free(qc_batch_p->gpu_result_p);
+    qc_batch_p->gpu_result_p = NULL;
+    if (qc_batch_p->gpu_kmers_valid_p != NULL) free(qc_batch_p->gpu_kmers_valid_p);
+    qc_batch_p->gpu_kmers_valid_p = NULL;
+    if (qc_batch_p->gpu_kmers_invalid_p != NULL) free(qc_batch_p->gpu_kmers_invalid_p);
+    qc_batch_p->gpu_kmers_invalid_p = NULL;    
+    if (qc_batch_p->gpu_nt_type_valid_counter_p != NULL) free(qc_batch_p->gpu_nt_type_valid_counter_p);
+    qc_batch_p->gpu_nt_type_valid_counter_p = NULL;
+    if (qc_batch_p->gpu_nt_type_invalid_counter_p != NULL) free(qc_batch_p->gpu_nt_type_invalid_counter_p);
+    qc_batch_p->gpu_nt_type_invalid_counter_p = NULL;
+    
     free(qc_batch_p);
+    qc_batch_p = NULL;
 }
 
 void qc_kmers_init(qc_kmers_t* qc_kmers_p) {
