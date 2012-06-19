@@ -38,7 +38,7 @@ hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o $(CUDA_OBJ
 	$(NVCC) $(NVCCFLAGS) fastq_hpc_main.o string_utils.o file_utils.o system_utils.o log.o list.o prepro_kernel_omp.o qc_report.o fastq_file.o fastq_read.o \
 		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o $(CUDA_OBJECTS) -o $(BIN)/hpg-fastq
 else
-hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o $(CUDA_OBJECTS)
+hpg-fastq: hpg-fastq-objects system_utils.o prepro.o fastq_hpc_main.o
 	$(CC) $(CFLAGS) fastq_hpc_main.o string_utils.o file_utils.o system_utils.o log.o list.o prepro_kernel_omp.o qc_report.o fastq_file.o fastq_read.o \
 		fastq_batch.o fastq_batch_list.o fastq_batch_reader.o qc_batch.o prepro_batch.o prepro_commons.o prepro.o chaos_game.o -o $(BIN)/hpg-fastq -lm
 endif
@@ -59,9 +59,11 @@ endif
 
 ifeq ($(NVCC_DISCOVER), 1)
 system_utils.o: $(COMMONS_LIB)/system_utils.h
+	@echo $(NVCC_DISCOVER)
 	$(CC) $(CFLAGS) $(CINCLUDES) -DCUDA_VERSION -c $(COMMONS_LIB)/system_utils.c
 else
 system_utils.o: $(COMMONS_LIB)/system_utils.h
+	@echo $(NVCC_DISCOVER)
 	$(CC) $(CFLAGS) $(CINCLUDES) -c $(COMMONS_LIB)/system_utils.c
 endif
 
