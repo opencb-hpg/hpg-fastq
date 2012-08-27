@@ -17,7 +17,6 @@
 /* ******************************************************
  *    		QC-prepro-filter kernels  		*
  * *****************************************************/
-
 __global__ void kernel_prepro(int *d_read_batch_data_indices_p, char* d_seq_p, char* d_quality_p, qc_read_t* d_gpu_result_p, int num_reads, int min_quality, int max_quality, int rtrim_nts, int ltrim_nts, int begin_quality_nt, int end_quality_nt) {
     char nt, quality;
     qc_read_t* qc_read_p;
@@ -218,7 +217,7 @@ __global__ void kernel_prepro(int *d_read_batch_data_indices_p, char* d_seq_p, c
             if (j <= lfilter_nt_position) {
                 lfilter_nts_accumulated_quality += quality;
             }
-        }
+        }	// end of: while ((nt = d_seq_p[i++]) != '\0')
 
         for (int h = 0; h < MAX_QUALITY_VALUE + PHRED64; h++) {
             median_aux_count += quality_histogram[h];

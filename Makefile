@@ -68,8 +68,8 @@ system_utils.o: $(COMMONS_LIB)/system_utils.h
 endif
 
 
-fastq_hpc_main.o: fastq_hpc_main.c *.h
-	$(CC) $(CFLAGS) $(CINCLUDES) -c fastq_hpc_main.c
+main_hpg_fastq.o: main_hpg_fastq.c *.h
+	$(CC) $(CFLAGS) $(CINCLUDES) -c main_hpg_fastq.c
 
 hpg-fastq-objects:
 	$(CC) $(CFLAGS) $(CINCLUDES) -c $(CONTAINERS_LIB)/list.c $(FASTQ_LIB)/*.c $(COMMONS_LIB)/file_utils.c $(COMMONS_LIB)/log.c  $(COMMONS_LIB)/string_utils.c \
