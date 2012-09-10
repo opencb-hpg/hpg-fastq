@@ -3,8 +3,8 @@
 #define PREPRO_CU
 
 #include "chaos_game.h"
-#include "fastq_batch_reader.h"
-#include "fastq_read.h"
+#include "fastq/fastq_batch_reader.h"
+#include "fastq/fastq_read.h"
 #include "qc_batch.h"
 #include "prepro.h"
 #include "prepro_batch.h"
@@ -766,7 +766,10 @@ void* writer_paired_end_server(void* params_p) {
  * *************************************************************************************/
 
 void kernel_prepro_fastq_single_end(size_t batch_size, int max_fastq_batch_list_length, int num_blocks, int num_threads, int cpu_num_threads, int cpu_qc_calc_num_threads, char* filename, char* output_directory, int min_quality, int max_quality, int base_quality, int begin_quality_nt, int end_quality_nt, int max_nts_mismatch, int max_n_per_read, int min_read_length, int max_read_length, int rtrim_nts, int ltrim_nts, int rfilter_nts, int lfilter_nts, int prepro_step, int filter_step, int qc_step, int kmers_on, int cg_flag, int k_cg, char* genomic_signature_input) {
-    int num_gpu_devices = 0;
+
+	printf("eeeeeeeeeee\n");
+
+	int num_gpu_devices = 0;
 
     gpus_thread_alive = num_gpu_devices + cpu_qc_calc_num_threads;
 

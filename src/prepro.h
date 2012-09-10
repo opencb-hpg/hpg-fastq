@@ -11,8 +11,8 @@
 #include <unistd.h>
 
 #include "commons.h"
-#include "fastq_batch_list.h"
-#include "fastq_file.h"
+#include "fastq/fastq_batch_list.h"
+#include "fastq/fastq_file.h"
 #include "list.h"
 #include "log.h"
 #include "file_utils.h"

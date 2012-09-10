@@ -3,7 +3,7 @@
 #define QC_BATCH_H
 
 #include "commons.h"
-#include "fastq_batch.h"
+#include "fastq/fastq_batch.h"
 
 #define A 				1	//Numer of A's: ltrim (10), rtrim (10), total (12)
 #define C 				3	//Numer of C's: ltrim (10), rtrim (10), total (12)

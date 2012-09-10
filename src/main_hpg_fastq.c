@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <libconfig.h>
 
+#include "options.h"
 #include "commons.h"
 #include "fastq_commons.h"
 #include "log.h"
@@ -14,25 +16,11 @@
 #include "string_utils.h"
 #include "system_utils.h"
 
-#define DEFAULT_MIN_READ_LENGTH     50
-#define DEFAULT_MAX_READ_LENGTH     200
-#define DEFAULT_MIN_READ_QUALITY    20
-#define DEFAULT_MAX_READ_QUALITY    60
 
-#define DEFAULT_GPU_NUM_BLOCKS      16
-#define DEFAULT_GPU_NUM_THREADS     512
-#define DEFAULT_GPU_NUM_DEVICES     0
-#define DEFAULT_CPU_NUM_THREADS     2
-#define DEFAULT_QC_CALC_NUM_THREADS 0
-#define DEFAULT_BATCH_SIZE_MB       64
-#define DEFAULT_BATCH_LIST_SIZE     4
-
-#define DEFAULT_K_IN_CHAOS_GAME    10
-
-#define FASTQ_HPC_TOOLS_USAGE "USAGE: fastq-hpc-tools [--prepro] [--filter] [--qc] --outdir --min-read-length --max-read-length [--last-nts]  \
- [--first-nts] [--begin-quality-nt] [--end-quality-nt] [--min-quality] [--max-quality] [--max-nts-mismatch] [--max-N-per-read] [--batch-size] \
- [--fastq|--fq]|[--fastq1|--fq1 --fastq2|--fq2] [--batch-list-size] [--phred-quality] [--kmers] [--rtrim] [--ltrim] [--t | --time] \
- [--cg -k --gs-filename]"
+#define FASTQ_HPC_TOOLS_USAGE "USAGE: hpg-fastq {qc | filter | prepro} --outdir [--min-read-length] [--max-read-length] [--last-nts]  \
+		[--first-nts] [--begin-quality-nt] [--end-quality-nt] [--min-quality] [--max-quality] [--max-nts-mismatch] [--max-N-per-read] [--batch-size] \
+		[--fastq|--fq]|[--fastq1|--fq1 --fastq2|--fq2] [--batch-list-size] [--phred-quality] [--kmers] [--rtrim] [--ltrim] [--t | --time] \
+		[--cg -k --gs-filename]\n"
 
 /* **********************************************
  *    		Global variables  		*
@@ -72,21 +60,82 @@ double mean_reads_per_batch = 0;
 double mean_batch_size = 0;
 
 int main(int argc, char **argv) {
-    // setting global variables for logger
-    log_level = LOG_DEFAULT_LEVEL;
-    verbose = 1;
-    log_filename = NULL;
 
+	char *command;
+
+	// setting global variables for logger
+	log_level = LOG_DEFAULT_LEVEL;
+	verbose = 1;
+	log_filename = NULL;
+
+
+	command = argv[1];
+
+	// We need to consume command: {qc | filter | prepro}
+	argc -= 1;
+	argv += 1;
+
+
+	options_t *options = parse_options(argc, argv);
+
+	if(options == NULL) {
+		LOG_ERROR("An error occurred when parsing options\n");
+		exit(0);
+	}
+
+	if(options->log_level) {
+		printf("log-level: %d\n", options->log_level);
+		log_level = options->log_level;
+	}
+
+	LOG_DEBUG_F("command: %s\n", command);
+
+
+
+	if(options->fastq_file) {
+		printf("fastq-file: %s\n", options->fastq_file);
+	}
+
+	if(options->output_directory) {
+		printf("output_directory: %s\n", options->output_directory);
+	}
+
+	if(options->cpu_num_threads) {
+		printf("cpu_num_threads: %d\n", options->cpu_num_threads);
+	}
+
+	if(options->min_quality) {
+		printf("min_quality: %d\n", options->min_quality);
+	}
+
+	if(options->kmers_flag) {
+		printf("kmers: %d\n", options->kmers_flag);
+	}
+
+	if (options->fastq_file != NULL) {
+		kernel_prepro_fastq_single_end(options->batch_size, options->batch_list_size,4, 4, options->cpu_num_threads, options->cpu_qc_calc_num_threads, options->fastq_file, options->output_directory, options->min_quality, options->max_quality, 33, options->start_quality_nt, options->end_quality_nt, options->max_nts_out_quality, options->max_n_per_read, options->min_read_length, options->max_read_length, options->rtrim_nts, options->ltrim_nts, options->rfilter_nts, options->lfilter_nts, 0, 0, 1, options->kmers_flag, options->cg_flag, options->k_cg, options->genomic_signature_input);
+	} else if (options->fastq1_file != NULL && options->fastq2_file != NULL) {
+		//		kernel_prepro_fastq_paired_end(batch_size, batch_list_size, gpu_num_blocks, gpu_num_threads, cpu_num_threads, cpu_qc_calc_num_threads, fastq1_input, fastq2_input, output_directory, min_quality, max_quality, base_quality, begin_quality_nt, end_quality_nt, max_nts_mismatch, max_n_per_read, min_read_length, max_read_length, rtrim_nts, ltrim_nts, rfilter_nts, lfilter_nts, prepro_flag, filter_flag, qc_flag, kmers_flag, cg_flag, k_cg, genomic_signature_input);
+	} else {
+		printf("Missing input files\n");
+		printf(FASTQ_HPC_TOOLS_USAGE);
+	}
+
+	if(options != NULL) {
+		options_free(options);
+	}
+
+	/*
     int qc_flag = 0;
     int kmers_flag = 0;
     int cg_flag = 0; //Chaos Game flag
 
     int filter_flag = 0;
     int prepro_flag = 0;
-    int min_read_length =  DEFAULT_MIN_READ_LENGTH;  // 50
-    int max_read_length =  DEFAULT_MAX_READ_LENGTH;  // 200
-    int min_quality =  DEFAULT_MIN_READ_QUALITY;  // 20
-    int max_quality =  DEFAULT_MAX_READ_QUALITY;  // 60
+    int min_read_length =  DEFAULT_MIN_READ_LENGTH;	// 50
+    int max_read_length =  DEFAULT_MAX_READ_LENGTH;	// 200
+    int min_quality =  DEFAULT_MIN_READ_QUALITY;  	// 20
+    int max_quality =  DEFAULT_MAX_READ_QUALITY;  	// 60
     int max_nts_mismatch = 3;
     int max_n_per_read = 0;
     int begin_quality_nt = 0;
@@ -109,23 +158,23 @@ int main(int argc, char **argv) {
     int batch_list_size =  DEFAULT_BATCH_LIST_SIZE;  // 4
 
     // conf file is parsed below
-    char* fastq_input = NULL;
-    char* fastq1_input = NULL;
-    char* fastq2_input = NULL;
-    char* genomic_signature_input = NULL;
-    char* output_directory = NULL;
+    char *fastq_input = NULL;
+    char *fastq1_input = NULL;
+    char *fastq2_input = NULL;
+    char *genomic_signature_input = NULL;
+    char *output_directory = NULL;
 
     int c;
     int option_index = 0;
 
     // struct defining options and its associated option internal value
     static struct option long_options[] = {
-        /* QC parameters */
+        // QC parameters
         {"qc",    no_argument, 0, 'a'},
         {"quality-control",   no_argument, 0, 'a'},
         {"kmers",    no_argument, 0, 'b'},
 
-        /* Filter and Preprocessing parameters */
+        // Filter and Preprocessing parameters
         {"filter",    no_argument, 0, 'c'},
         {"prep",    no_argument, 0, 'd'},
         {"preprocessing",   no_argument, 0, 'd'},
@@ -143,10 +192,10 @@ int main(int argc, char **argv) {
         {"rfilter-nts",   required_argument, 0, 'o'},
         {"lfilter-nts",   required_argument, 0, 'p'},
 
-        /* Commons parameters */
+        //* Commons parameters
         {"phred-quality",   required_argument, 0, 'q'},
 
-        /* HPC parameters  */
+        //* HPC parameters
         {"gpu-num-blocks",   required_argument, 0, 'r'}, // num-blocks: 16 (dafault 16)
         {"gpu-num-threads",   required_argument, 0, 's'}, // num-threads: 512
         {"gpu-num-devices",   required_argument, 0, 't'}, // num-devices: 1 (NOTE: 0 for all of them)
@@ -154,7 +203,7 @@ int main(int argc, char **argv) {
         {"batch-size",   required_argument, 0, 'v'}, // batch-size (MB): default 256 (~256MB) (NOTE: optimize for GPUs)
         {"batch-list-size",    required_argument, 0, 'w'}, // batch-list-size: number of batches in the list (default: 4)
 
-        /* IO parameters */
+        //* IO parameters
         {"fq",    required_argument, 0, 'x'},
         {"fastq",    required_argument, 0, 'x'},
         {"fq1",     required_argument, 0, 'y'},
@@ -165,7 +214,7 @@ int main(int argc, char **argv) {
         {"outdir",    required_argument, 0, 'A'},
         {"conf",    required_argument, 0, 'B'},
 
-        /* LOG parameters  */
+        //* LOG parameters
         {"log-level",    required_argument, 0, 'C'}, // levels form 1 to 5 (DEBUG to FATAL)
         {"log-file",    required_argument, 0, 'D'},
         {"v",     required_argument, 0, 'E'}, // verbose: if False no 'console' output
@@ -173,7 +222,7 @@ int main(int argc, char **argv) {
         {"t",     no_argument, 0, 'F'},
         {"time",    no_argument, 0, 'F'},
 
-        /* GENOMIC SIGNATURE (chaos game) parameters  */
+        //* GENOMIC SIGNATURE (chaos game) parameters
         {"cg",    no_argument, 0, 'G'},
         {"chaos-game",   no_argument, 0, 'G'},
         {"k",     required_argument, 0, 'H'},
@@ -184,45 +233,40 @@ int main(int argc, char **argv) {
 
     LOG_LEVEL(LOG_INFO_LEVEL);
 
-    // parsing confing file if passed as argument (--conf <file>)
-    int argc_with_file_options;
-    char **argv_with_file_options = NULL;
-    char **argv_from_file_options = NULL;
+	 */
+	// validation of no argument launch
 
-    for (int i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "--conf") == 0) {
-            char* str = (char*) calloc(256, sizeof(char));
-            strcpy(str, "Reading config file: ");
-            strcat(str, argv[i+1]);
-            LOG_DEBUG(str);
 
-            argv_from_file_options = parse_conf_file(argv[i+1]);
-            int num_conf_lines = count_lines(argv[i+1]);
-            argv_with_file_options = (char **)malloc((argc + 2 * num_conf_lines) * sizeof(char *));
+	// parsing confing file if passed as argument (--conf <file>)
+	//    int argc_with_file_options;
+	//    char **argv_with_file_options = NULL;
+	//    char **argv_from_file_options = NULL;
 
-            char str1[1024];
-            strcpy(str1, "Command line: ");
-            argc_with_file_options = argc + 2 * num_conf_lines;
+	//    for(int i = 0; i < argc; i++) {
+	//        if (strcmp(argv[i], "--conf") == 0) {
+	//
+	//            char* str = (char*) calloc(256, sizeof(char));
+	//            strcpy(str, "Reading config file: ");
+	//            strcat(str, argv[i+1]);
+	//            LOG_DEBUG(str);
+	//            argv_from_file_options = parse_conf_file(argv[i+1]);
+	//            int num_conf_lines = count_lines(argv[i+1]);
+	//            argv_with_file_options = (char **)malloc((argc + 2 * num_conf_lines) * sizeof(char *));
+	//            char str1[1024];
+	//            strcpy(str1, "Command line: ");
+	//            argc_with_file_options = argc + 2 * num_conf_lines;
+	//            for (int j = 0; j < argc_with_file_options; j++) {
+	//                strcat(str1, argv_with_file_options[j]);
+	//            }
+	//            LOG_INFO(str1);
+	//            free(str);
+	//        }
+	//    }
 
-            for (int j = 0; j < argc_with_file_options; j++) {
-                strcat(str1, argv_with_file_options[j]);
-            }
+	//    argc_with_file_options = argc;
+	//    argv_with_file_options = argv;
 
-            LOG_INFO(str1);
-
-            free(str);
-        }
-    }
-
-    argc_with_file_options = argc;
-    argv_with_file_options = argv;
-
-    // validation of no argument launch
-    if (argc < 2) {
-        printf(FASTQ_HPC_TOOLS_USAGE);
-        exit(0);
-    }
-
+	/*
     while ((c = getopt_long(argc_with_file_options, argv_with_file_options, "", long_options, &option_index)) != -1) {
         switch (c) {
             case 'a':
@@ -400,7 +444,7 @@ int main(int argc, char **argv) {
                 }
                 break;
 
-            /* PARSING HPC PARAMETERS */
+            // PARSING HPC PARAMETERS
             case 'r':
                 if (gpu_num_blocks == DEFAULT_GPU_NUM_BLOCKS) {
                     if (is_numeric(optarg) != 0) {
@@ -484,7 +528,7 @@ int main(int argc, char **argv) {
                 }
                 break;
 
-            /* PARSING IO PARAMETERS */
+            // PARSING IO PARAMETERS
             case 'x':
                 //printf("option --fastq or --fq with value '%s'\n", optarg);
                 if (fastq_input == NULL) {
@@ -517,7 +561,7 @@ int main(int argc, char **argv) {
                 }
                 break;
 
-            /* PARSING LOG PARAMETERS */
+            // PARSING LOG PARAMETERS
             case 'C':
                 //printf("option --log-level with value '%s'\n", optarg);
                 if (is_numeric(optarg) != 0) {
@@ -574,7 +618,7 @@ int main(int argc, char **argv) {
                 }
                 break;
 
-            case ':':       /* option without mandatory operand */
+            case ':':       // option without mandatory operand
                 fprintf(stderr, "Option -%c requires an operand\n", optopt);
                 break;
 
@@ -587,6 +631,10 @@ int main(int argc, char **argv) {
                 abort();
         }
     }
+	 */
+
+
+	/*
 
     // de-normalization of quality scale
     min_quality += base_quality;
@@ -758,5 +806,12 @@ int main(int argc, char **argv) {
     if (genomic_signature_input != NULL) free(genomic_signature_input);
     if (fastq_options != NULL) free(fastq_options);
 
-    return 1;
+	 */
+
+	return 1;
 }
+
+//int read_config_file() {
+//
+//	return 1;
+//}

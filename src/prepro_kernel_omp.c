@@ -1,9 +1,9 @@
 
 #include "commons.h"
-#include "fastq_file.h"
-#include "fastq_batch_list.h"
-#include "fastq_batch_reader.h"
-#include "fastq_read.h"
+#include "fastq/fastq_file.h"
+#include "fastq/fastq_batch_list.h"
+#include "fastq/fastq_batch_reader.h"
+#include "fastq/fastq_read.h"
 #include "log.h"
 #include "prepro_kernel_omp.h"
 #include "qc_batch.h"

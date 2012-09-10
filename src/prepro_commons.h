@@ -2,8 +2,8 @@
 #ifndef PREPRO_COMMONS_H
 #define PREPRO_COMMONS_H
 
-#include "fastq_batch_reader.h"
-#include "fastq_read.h"
+#include "fastq/fastq_batch_reader.h"
+#include "fastq/fastq_read.h"
 
 // #include "chaos_game.h"
 // #include "qc_batch.h"

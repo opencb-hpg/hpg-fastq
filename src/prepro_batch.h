@@ -5,8 +5,8 @@
 #include <pthread.h>
 
 #include "commons.h"
-#include "fastq_batch.h"
-#include "fastq_file.h"
+#include "fastq/fastq_batch.h"
+#include "fastq/fastq_file.h"
 
 #define VALID_READ		'V'
 #define INVALID_READ	 	'I'
