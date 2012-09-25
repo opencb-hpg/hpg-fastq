@@ -1,3 +1,0 @@
-[submodule "libs/containers"]
-	path = libs/containers
-	url = git://localhost/bioinfo-c/libs/containers
