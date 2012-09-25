@@ -1,9 +1,3 @@
-[submodule "libs/commons"]
-	path = libs/commons
-	url = git://localhost/bioinfo-c/libs/commons
-[submodule "libs/commons-cuda"]
-	path = libs/commons-cuda
-	url = git://localhost/bioinfo-c/libs/commons-cuda
 [submodule "libs/containers"]
 	path = libs/containers
 	url = git://localhost/bioinfo-c/libs/containers
