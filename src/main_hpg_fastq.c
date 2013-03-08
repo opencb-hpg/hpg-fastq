@@ -28,13 +28,13 @@
 #include <libconfig.h>
 
 #include "options.h"
-#include "commons.h"
+#include "commons/commons.h"
 #include "fastq_commons.h"
-#include "log.h"
-#include "file_utils.h"
+#include "commons/log.h"
+#include "commons/file_utils.h"
 #include "qc_batch.h"
-#include "string_utils.h"
-#include "system_utils.h"
+#include "commons/string_utils.h"
+#include "commons/system_utils.h"
 
 
 #define FASTQ_HPC_TOOLS_USAGE "USAGE: hpg-fastq {qc | filter | prepro} --outdir [--min-read-length] [--max-read-length] [--last-nts]  \
@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
 
 	// setting global variables for logger
 	log_level = LOG_DEFAULT_LEVEL;
-	verbose = 1;
-	log_filename = NULL;
+	int verbose = 1;
+	char *log_filename = NULL;
 
 
 	command = argv[1];

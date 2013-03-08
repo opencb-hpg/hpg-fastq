@@ -34,30 +34,30 @@
 #include <argtable2.h>
 #include <libconfig.h>
 
-#include <log.h>
+#include <commons/log.h>
 
-#define DEFAULT_MIN_READ_LENGTH		50
-#define DEFAULT_MAX_READ_LENGTH		200
+#define DEFAULT_MIN_READ_LENGTH			50
+#define DEFAULT_MAX_READ_LENGTH			200
 #define DEFAULT_MIN_READ_QUALITY		20
 #define DEFAULT_MAX_READ_QUALITY		60
-#define DEFAULT_MAX_NTS_OUT_QUALITY	3
+#define DEFAULT_MAX_NTS_OUT_QUALITY		3
 #define DEFAULT_MAX_N_PER_READ			0
 #define DEFAULT_START_QUALITY_NT		0
 #define DEFAULT_END_QUALITY_NT			1024
 
 #define DEFAULT_GPU_NUM_BLOCKS			16
-#define DEFAULT_GPU_NUM_THREADS		512
-#define DEFAULT_GPU_NUM_DEVICES		0
-#define DEFAULT_CPU_NUM_THREADS		4
-#define DEFAULT_QC_CALC_NUM_THREADS	0
+#define DEFAULT_GPU_NUM_THREADS			512
+#define DEFAULT_GPU_NUM_DEVICES			0
+#define DEFAULT_CPU_NUM_THREADS			4
+#define DEFAULT_QC_CALC_NUM_THREADS		0
 #define DEFAULT_BATCH_SIZE_MB			64*1000000
-#define DEFAULT_BATCH_LIST_SIZE		4
+#define DEFAULT_BATCH_LIST_SIZE			4
 
-#define DEFAULT_K_IN_CHAOS_GAME		10
+#define DEFAULT_K_IN_CHAOS_GAME			10
 
 #define DEFAULT_LOG_LEVEL				2
 
-#define NUM_OPTIONS					30
+#define NUM_OPTIONS						30
 
 typedef struct options {
 	char *fastq_file; /**< FASTQ file used as input. */
@@ -150,7 +150,14 @@ options_t *read_CLI_options(void **argtable_options, options_t *options);
 int read_config_file(const char *filename, options_t *options);
 
 
-
+/**
+ * @brief Parses command line options into options_t structure
+ * @param argc number of command line arguments
+ * @param argv double pointer to command line arguments
+ * @return pointer to options_t structure
+ *
+ * Parses command line options (argv) into options_t structure
+ */
 options_t *parse_options(int argc, char **argv);
 
 

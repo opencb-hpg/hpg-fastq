@@ -22,7 +22,7 @@
 #ifndef PREPRO_CU
 #define PREPRO_CU
 
-#include "chaos_game.h"
+//#include "chaos_game.h"
 #include "fastq/fastq_batch_reader.h"
 #include "fastq/fastq_read.h"
 #include "qc_batch.h"

@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 
-#include "chaos_game.h"
+//#include "chaos_game.h"
 #include "fastq_commons.h"
-#include "file_utils.h"
+#include "commons/file_utils.h"
 
 #define QC_SUFFIX		".qc"
 #define CG_SUFFIX		".cg"

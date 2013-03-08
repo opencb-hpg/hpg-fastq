@@ -24,7 +24,7 @@
 
 #include <pthread.h>
 
-#include "commons.h"
+#include "commons/commons.h"
 #include "fastq/fastq_batch.h"
 #include "fastq/fastq_file.h"
 

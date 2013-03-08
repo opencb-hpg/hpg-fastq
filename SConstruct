@@ -1,13 +1,13 @@
 
 # Initialize the environment with path variables, CFLAGS, and so on
-bioinfo_path = '#libs/bioinfo-libs'
-commons_path = '#libs/common-libs'
+bioinfo_path = '#lib/bioinfo-libs'
+commons_path = '#lib/common-libs'
 
 env = Environment(tools = ['default', 'packaging'],
                   CFLAGS = '-std=c99 -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -fopenmp',
-                  CPPPATH = ['#', '#src', '#include', '/usr/local/include', '/usr/include/libxml2', bioinfo_path, commons_path ],
-                  LIBPATH = ['/usr/lib', '/usr/local/lib', '#libs', '#libs/common-libs/', commons_path ],
-                  LIBS = ['argtable2', 'common', 'config', 'cprops', 'xml2', 'z'],
+                  CPPPATH = ['#', '#src', '#include', '/usr/local/include', '/usr/include/libxml2', bioinfo_path, '#lib/bioinfo-libs/bioformats', commons_path ],
+                  LIBPATH = ['/usr/lib', '/usr/local/lib', '#lib', '#lib/common-libs/', '#lib/bioinfo-libs/bioformats' ],
+                  LIBS = ['argtable2', 'common', 'bioformats', 'config', 'cprops', 'xml2', 'z'],
                   LINKFLAGS = ['-fopenmp'])
                   
 if int(ARGUMENTS.get('debug', '0')) == 1:
@@ -19,7 +19,6 @@ else:
 
 env['objects'] = []
 
-
 ##### Targets
 
 # Compile dependencies
@@ -28,7 +27,12 @@ SConscript(['%s/bioformats/SConscript' % bioinfo_path,
             ], exports = ['env', 'debug'])
 
 # Create binaries and copy them to 'bin' folder
-progs = Program('hpg-fastq', source = [Glob('src/*.c')], exports = ['env', 'debug', 'commons_path', 'bioinfo_path' ])
+env.Program('hpg-fastq', 
+                    source = [Glob('src/*.c'),
+                                "%s/libcommon.a" % commons_path,
+                                "%s/bioformats/libbioformats.a" % bioinfo_path
+                                ], 
+                    exports = ['env', 'debug', 'commons_path', 'bioinfo_path' ])
 
 env.Install('#bin', ['hpg-fastq.conf'])
 

@@ -30,14 +30,14 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "commons.h"
-#include "fastq/fastq_batch_list.h"
+#include "commons/commons.h"
+//#include "fastq/fastq_batch_list.h"
 #include "fastq/fastq_file.h"
-#include "list.h"
-#include "log.h"
-#include "file_utils.h"
+#include "containers/list.h"
+#include "commons/log.h"
+#include "commons/file_utils.h"
 #include "prepro_commons.h"
-#include "system_utils.h"
+#include "commons/system_utils.h"
 
 /* **************************************
  *    		Structures  		*
