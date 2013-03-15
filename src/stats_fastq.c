@@ -15,6 +15,7 @@ stats_counters_t *stats_counters_new() {
   stats_counters_t *sc = calloc(1, sizeof(stats_counters_t));
 
   sc->num_reads = 0;
+  sc->phred = QUALITY_PHRED33_VALUE;
 
   sc->min_length = 100000;
   sc->max_length = 0;
@@ -313,6 +314,7 @@ void stats_fastq(stats_options_t *opts) {
 
   fastq_file_t *fq_file = fastq_fopen(opts->in_filename);
   stats_counters_t *counters = stats_counters_new();
+  counters->phred = opts->quality_encoding_value;
   
   //------------------------------------------------------------------
   // workflow management

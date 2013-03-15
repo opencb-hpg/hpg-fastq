@@ -21,6 +21,8 @@ stats_options_t *new_stats_options(char *exec_name, char *command_name) {
   opts->help = 0;
   opts->num_threads = 2;
   opts->batch_size = 10000;
+  opts->quality_encoding_value = 0;
+  opts->quality_encoding_name = NULL;
   opts->in_filename = NULL;
   opts->out_dirname = NULL;
   opts->gff_region_filename = NULL;
@@ -70,6 +72,7 @@ stats_options_t *parse_stats_options(char *exec_name, char *command_name,
 void free_stats_options(stats_options_t *opts) {
   if (opts == NULL) { return; }
   
+  if (opts->quality_encoding_name) { free(opts->quality_encoding_name); }
   if (opts->in_filename) { free(opts->in_filename); }
   if (opts->out_dirname) { free(opts->out_dirname); }
   if (opts->gff_region_filename) { free(opts->gff_region_filename); }
@@ -85,13 +88,29 @@ void free_stats_options(stats_options_t *opts) {
 
 void validate_stats_options(stats_options_t *opts) {
   if (! exists(opts->in_filename)) {
-    printf("\nError: Input file name not found !\n\n");
+    printf("\nError: Input file name not found !\n");
     usage_stats_options(opts);
   }
 
   if (! exists(opts->out_dirname)) {
     opts->out_dirname = strdup(".");
   }
+
+  if (opts->quality_encoding_name) {
+    if (strcmp(opts->quality_encoding_name, QUALITY_PHRED33_NAME) == 0) {
+      opts->quality_encoding_value = QUALITY_PHRED33_VALUE;
+    } else if (strcmp(opts->quality_encoding_name, QUALITY_PHRED64_NAME) == 0) {
+      opts->quality_encoding_value = QUALITY_PHRED64_VALUE;
+    } else {
+      printf("\nError: Invalid quality encoding value (%s). Valid values: %s, %s\n",
+	     opts->quality_encoding_name, QUALITY_PHRED33_NAME, QUALITY_PHRED64_NAME);
+      usage_stats_options(opts);
+    }
+  } else {
+    opts->quality_encoding_name = strdup(QUALITY_PHRED33_NAME);
+    opts->quality_encoding_value = QUALITY_PHRED33_VALUE;
+  }
+
 }
 
 //------------------------------------------------------------------------
@@ -100,8 +119,9 @@ void display_stats_options(stats_options_t *opts) {
   printf("PARAMETERS CONFIGURATION\n");
   printf("=================================================\n");
   printf("Main options\n");
-  printf("\tFastQ input filename  : %s\n", opts->in_filename);
-  printf("\tOutput dirname      : %s\n", opts->out_dirname);
+  printf("\tFastQ input filename : %s\n", opts->in_filename);
+  printf("\tOutput dirname       : %s\n", opts->out_dirname);
+  printf("\tQuality encoding     : %s\n", opts->quality_encoding_name);
   if (opts->region_list) {
     printf("\tRegions             : %s\n", opts->region_list);
   } else if (opts->gff_region_filename) {
@@ -131,6 +151,7 @@ stats_options_t *read_cli_stats_options(void **argtable, stats_options_t *opts) 
   if (((struct arg_int*)argtable[4])->count) { opts->verbose = *(((struct arg_int*)argtable[4])->ival); }
   if (((struct arg_int*)argtable[5])->count) { opts->num_threads = *(((struct arg_int*)argtable[5])->ival); }
   if (((struct arg_int*)argtable[6])->count) { opts->batch_size = *(((struct arg_int*)argtable[6])->ival); }
+  if (((struct arg_int*)argtable[7])->count) { opts->quality_encoding_name = strdup(*(((struct arg_str*)argtable[7])->sval)); }
   /*
   if (((struct arg_file*)argtable[7])->count) { opts->gff_region_filename = strdup(*(((struct arg_file*)argtable[7])->filename)); }
   if (((struct arg_str*)argtable[8])->count) { opts->region_list = strdup(*(((struct arg_str*)argtable[8])->sval)); }
@@ -159,6 +180,10 @@ void** new_argtable_stats_options() {
   argtable[4] = arg_int0("v", "verbose", NULL, "Verbose");
   argtable[5] = arg_int0(NULL, "num-threads", NULL, "Number of threads");
   argtable[6] = arg_int0(NULL, "batch-size", NULL, "Batch size (in number of alignments)");
+  char str[512];
+  sprintf(str, "Encoding for quality scores: %s, %s", 
+	  QUALITY_PHRED33_NAME, QUALITY_PHRED64_NAME);
+  argtable[7] = arg_str0(NULL, "quality-encoding", NULL, strdup(str));
   //  argtable[7] = arg_file0(NULL, "gff-refion-file", NULL, "Region file name (GFF format)");
   //  argtable[8] = arg_str0(NULL, "region-list", NULL, "Regions (e.g., 1:3000-3200,4:100-200,...)");
   

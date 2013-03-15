@@ -17,11 +17,13 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
 
 
 //--------------------------------------------------------------------
-// report graph
+// private functions
 //--------------------------------------------------------------------
 
-void init_report_graph(report_graph_t* graph);
-void generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *prefix);
+void _init_report_graph(report_graph_t* graph);
+void __generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *prefix);
+
+#define _normalize_quality(quality,phred) (round((quality) - (phred)))
 
 //--------------------------------------------------------------------
 // stats report
@@ -37,7 +39,7 @@ void stats_report(char *in_filename, stats_counters_t *counters, char *out_dir) 
 //--------------------------------------------------------------------
 
 void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir) {
-  
+
   char path[strlen(in_filename) + strlen(out_dir) + 100];
   sprintf(path, "%s/%s.summary.txt", out_dir, in_filename);
 
@@ -57,7 +59,8 @@ void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir
 	 counters->min_length, 1.0f * counters->acc_length / counters->num_reads,
 	 counters->max_length);
   fprintf(f, "\n");
-  fprintf(f, "Mean quality = %0.2f\n", 1.0f * counters->acc_quality / counters->num_reads);
+  fprintf(f, "Mean quality = %0.2f\n", 
+	  _normalize_quality(1.0f * counters->acc_quality / counters->num_reads, counters->phred));
   fprintf(f, "\n");
   fprintf(f, "Nucleotide content (A, C, G, T, N)\n");
   fprintf(f, "\tA: %0.2f %\n", 100.0f * counters->num_As / num_nucleotides);
@@ -76,11 +79,13 @@ void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir
   hacc_quals = counters->kh_acc_quality_per_nt;
   hcount_quals = counters->kh_count_quality_per_nt;
 
+  int qual;
   for (k = 0; k < counters->max_length; k++) {
     acc_quals = (kh_size(hacc_quals) && kh_exist(hacc_quals, k) ? kh_value(hacc_quals, k) : 0);
     count_quals = (kh_size(hcount_quals) && kh_exist(hcount_quals, k) ? kh_value(hcount_quals, k) : 0);
 
-    fprintf(f, "\tpos. %i: %i\t", k + 1, acc_quals / count_quals);
+    qual = _normalize_quality(acc_quals / count_quals, counters->phred);
+    fprintf(f, "\tpos. %i: %i [%c]\t", k + 1, qual, qual + counters->phred);
     if ((k+1) % 5 == 0) fprintf(f, "\n");
   }
   fprintf(f, "\n");
@@ -120,7 +125,7 @@ void report_length(char *in_filename, stats_counters_t *counters, char *out_dir)
   // image
   sprintf(img_prefix, "%s/%s.length.histogram", out_dir, in_filename);
   report_graph_t graph;
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "Read Length Histogram");
   strcpy(graph.xlabel, "Read length");
@@ -134,7 +139,7 @@ void report_length(char *in_filename, stats_counters_t *counters, char *out_dir)
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 }
 
 //--------------------------------------------------------------------
@@ -172,7 +177,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   // GC histogram image
   sprintf(img_prefix, "%s/%s.GC.histogram", out_dir, in_filename);
   report_graph_t graph;
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "GC Content Histogram");
   strcpy(graph.xlabel, "GC content (%)");
@@ -186,7 +191,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 
   // nucleotide content A, T, G, C, N
   khash_t(32) *hA, *hT, *hG, *hC, *hN;
@@ -222,7 +227,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
 
   // GC per nt position image
   sprintf(img_prefix, "%s/%s.GC.per.nt", out_dir, in_filename);
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "GC Content per Nucleotide Position");
   strcpy(graph.xlabel, "Nucleotide position");
@@ -236,9 +241,9 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 
-  // GC per nt position data
+  // quality per nt position data
   sprintf(data_filename, "%s/%s.quality.per.nt.data", out_dir, in_filename);
 
   f = fopen(data_filename, "w");
@@ -248,22 +253,26 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   hacc_quals = counters->kh_acc_quality_per_nt;
   hcount_quals = counters->kh_count_quality_per_nt;
 
+  int qual;
   for (k = 0; k < counters->max_length; k++) {
     acc_quals = (kh_size(hacc_quals) && kh_exist(hacc_quals, k) ? kh_value(hacc_quals, k) : 0);
     count_quals = (kh_size(hcount_quals) && kh_exist(hcount_quals, k) ? kh_value(hcount_quals, k) : 0);
 
-    fprintf(f, "%i\t%0.2f\n", k, 1.0f * acc_quals / count_quals);
+    qual = _normalize_quality(1.0f * acc_quals / count_quals, counters->phred);
+    fprintf(f, "%i\t%i\n", k, qual);
   }
 
   fclose(f);
 
   // GC per nt position image
   sprintf(img_prefix, "%s/%s.quality.per.nt", out_dir, in_filename);
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "Quality per Nucleotide Position");
   strcpy(graph.xlabel, "Nucleotide position");
-  strcpy(graph.ylabel, "Quality");
+  char str[100];
+  sprintf(str, "Quality (Phred%i scale)", counters->phred);
+  strcpy(graph.ylabel, str);
   strcpy(graph.type, "lines");
   graph.x_autoscale = 0;
   graph.x_start = 0;
@@ -273,7 +282,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 
   // Nucleotide content per nucleotide position data
   sprintf(data_filename, "%s/%s.nucleotides.data", out_dir, in_filename);
@@ -296,7 +305,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
 
   // N per nt position image
   sprintf(img_prefix, "%s/%s.nucleotides", out_dir, in_filename);
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "Nucleotide Content per Position");
   strcpy(graph.xlabel, "Nucleotide position");
@@ -319,7 +328,7 @@ void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_
   strcpy(graph.y_titles[3], "C %");
   strcpy(graph.y_titles[4], "N %");
 
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 }
 
 //--------------------------------------------------------------------
@@ -339,15 +348,20 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   size_t quals[num_cols];
   memset(quals, 0, num_cols * sizeof(size_t));
 
+  int qual, min_qual = 1000, max_qual = 0;
   khiter_t k;
   khash_t(32) *h = counters->kh_quality_histogram;
   for (k = kh_begin(h); k != kh_end(h); ++k) { 
     if (kh_exist(h, k)) {
-      quals[kh_key(h, k)] = kh_value(h, k);
+      qual = kh_key(h, k);
+      if (min_qual > qual) min_qual = qual;
+      if (max_qual < qual) max_qual = qual;
+      quals[qual] = kh_value(h, k);
     }
   }
-  for (int i = 1 ; i < num_cols; i++) {
-    fprintf(f, "%i\t%i\n", i, quals[i]);
+
+  for (int i = min_qual ; i <= max_qual; i++) {
+    fprintf(f, "%i\t%i\n", i - counters->phred, quals[i]);
   }
 
   fclose(f);
@@ -355,21 +369,23 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   // quality histogram image
   sprintf(img_prefix, "%s/%s.quality.histogram", out_dir, in_filename);
   report_graph_t graph;
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "Quality Histogram");
-  strcpy(graph.xlabel, "Quality");
+  char str[50];
+  sprintf(str, "Quality (Phred%i scale)", counters->phred);
+  strcpy(graph.xlabel, str);
   strcpy(graph.ylabel, "Number of reads");
   strcpy(graph.type, "boxes");
   graph.x_autoscale = 0;
   graph.x_start = 0;
-  graph.x_end = num_cols;
+  graph.x_end = max_qual - min_qual + 5;
   graph.y_autoscale = 1;
   graph.x_column = 1;
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 
   // quality per nt position
   sprintf(data_filename, "%s/%s.quality.per.nt.data", out_dir, in_filename);
@@ -388,18 +404,18 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
     acc_quals = (kh_size(hacc_quals) && kh_exist(hacc_quals, k) ? kh_value(hacc_quals, k) : 0);
     count_quals = (kh_size(hcount_quals) && kh_exist(hcount_quals, k) ? kh_value(hcount_quals, k) : 0);
 
-    fprintf(f, "%i\t%0.2f\n", k, 1.0f * acc_quals / count_quals);
+    fprintf(f, "%i\t%0.2f\n", k, _normalize_quality(acc_quals / count_quals, counters->phred));
   }
 
   fclose(f);
 
   // quality per nucleotide image
   sprintf(img_prefix, "%s/%s.quality.per.nt", out_dir, in_filename);
-  init_report_graph(&graph);
+  _init_report_graph(&graph);
   
   strcpy(graph.title, "Quality per Nucleotide Position");
   strcpy(graph.xlabel, "Nucleotide position");
-  strcpy(graph.ylabel, "Quality");
+  strcpy(graph.ylabel, str);
   strcpy(graph.type, "lines");
   graph.x_autoscale = 0;
   graph.x_start = 0;
@@ -409,14 +425,14 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
-  generate_gnuplot_image(&graph, data_filename, img_prefix);
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
 }
 
 //--------------------------------------------------------------------
 // report graph
 //--------------------------------------------------------------------
 
-void init_report_graph(report_graph_t* graph) {
+void _init_report_graph(report_graph_t* graph) {
     graph->x_autoscale = 1;
     graph->x_start = 1;
     graph->x_end = 100;
@@ -427,10 +443,10 @@ void init_report_graph(report_graph_t* graph) {
     graph->rmargin = 4;
     graph->tmargin = 3;
     graph->bmargin = 4;
-    *graph->title = 0;
-    *graph->xlabel = 0;
-    *graph->ylabel = 0;
-    *graph->type = 0;
+    graph->title[0] = 0;
+    graph->xlabel[0] = 0;
+    graph->ylabel[0] = 0;
+    graph->type[0] = 0;
     graph->x_column = 0;
     graph->num_y_columns = 1;
     graph->y_columns[0] = 1;
@@ -438,7 +454,7 @@ void init_report_graph(report_graph_t* graph) {
 
 //--------------------------------------------------------------------
 
-void generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *prefix) {
+void _generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *prefix) {
     // lines specifying input data and output graph are declared and filled
     char line[2048];
     

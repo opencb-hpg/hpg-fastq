@@ -17,12 +17,19 @@
 #include "commons/system_utils.h"
 #include "commons/file_utils.h"
 
-//============================ DEFAULT VALUES ============================
+//------------------------------------------------------------------------
+
+#define QUALITY_PHRED33_VALUE  33
+#define QUALITY_PHRED33_NAME  "phred33"
+
+#define QUALITY_PHRED64_VALUE  64
+#define QUALITY_PHRED64_NAME  "phred64"
+
 
 //------------------------------------------------------------------------
 
-//#define NUM_STATS_OPTIONS	9
-#define NUM_STATS_OPTIONS	7
+//#define NUM_STATS_OPTIONS	10
+#define NUM_STATS_OPTIONS	8
 
 //------------------------------------------------------------------------
 
@@ -32,6 +39,8 @@ typedef struct stats_options {
   int help;
   int num_threads;
   int batch_size;
+  int quality_encoding_value;
+  char *quality_encoding_name;
 
   char* in_filename;
   char* out_dirname;

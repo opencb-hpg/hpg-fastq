@@ -36,12 +36,12 @@ typedef struct report_graph {
     int bmargin;					/**< Bottom margin. */
     int num_y_columns;					/**< Number of columns in the Y axis. */
     int x_column;					/**< Number of column in data file with X axis data. */
-    int y_columns[MAX_SERIES_GRAPH];			/**< Numbers of columns in data file that are represented in Y axis. */
-    char y_titles[MAX_SERIES_GRAPH][MAX_LINE_GRAPH];			/**< Titles of series represented in Y axis. */
     char title[MAX_LINE_GRAPH];					/**< Title of the graphic. */
     char xlabel[MAX_LINE_GRAPH];					/**< Label of X axis. */	
     char ylabel[MAX_LINE_GRAPH];					/**< Label of Y axis. */
     char type[MAX_LINE_GRAPH]; 					/**< Type of graph. */
+    int y_columns[MAX_SERIES_GRAPH];			/**< Numbers of columns in data file that are represented in Y axis. */
+    char y_titles[MAX_SERIES_GRAPH][MAX_LINE_GRAPH];			/**< Titles of series represented in Y axis. */
 } report_graph_t;
 
 //------------------------------------------------------------------------

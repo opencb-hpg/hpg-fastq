@@ -34,6 +34,7 @@ KHASH_MAP_INIT_INT(32, int)
 
 typedef struct stats_counters {
   size_t num_reads;
+  int phred;
 
   int min_length;
   int max_length;
