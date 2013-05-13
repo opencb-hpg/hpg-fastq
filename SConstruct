@@ -25,7 +25,7 @@ env = Environment(tools = ['default', 'packaging'],
 #                  LIBPATH = ['#libs/common-libs/', '$SAMTOOLS_LIBRARY_PATH', '$CPROPS_LIBRARY_PATH', '$EXTRAE_LIBRARY_PATH', commons_path],
 #                  LIBS = ['argtable2', 'common', 'config', 'bam', 'cprops', 'm', 'z', 'pttrace'],
                   LIBPATH = ['#libs/common-libs/', '$SAMTOOLS_LIBRARY_PATH', '$CPROPS_LIBRARY_PATH', commons_path],
-                  LIBS = ['argtable2', 'common', 'config', 'bam', 'cprops', 'm', 'z', 'curl'],
+                  LIBS = ['common', 'm', 'z'],
                   LINKFLAGS = ['-fopenmp'])
                   
 
