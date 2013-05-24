@@ -9,12 +9,14 @@
  */
 
 #include "stats_fastq.h"
+#include "stats_options.h"
 
 //--------------------------------------------------------------------
 // stats report
 //--------------------------------------------------------------------
 
-void stats_report(char *in_filename, stats_counters_t *counters, char *out_dir);
+void stats_report(stats_counters_t *counters, stats_options_t *opts);
+//void stats_report(char *in_filename, stats_counters_t *counters, char *out_dir);
 
 //--------------------------------------------------------------------
 // report graph

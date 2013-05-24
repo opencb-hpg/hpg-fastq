@@ -1,8 +1,8 @@
-#ifndef FILTER_OPTIONS_H
-#define FILTER_OPTIONS_H
+#ifndef EDIT_OPTIONS_H
+#define EDIT_OPTIONS_H
 
 /*
- * filter_options.h
+ * edit_options.h
  *
  *  Created on: May 22, 2013
  *      Author: jtarraga
@@ -23,16 +23,19 @@
 
 //------------------------------------------------------------------------
 
-#define NUM_FILTER_OPTIONS    13
+#define NUM_EDIT_OPTIONS    12
 
 //------------------------------------------------------------------------
 
-typedef struct filter_options { 
+typedef struct edit_options { 
+  int kmers_on;
+  int filter_on;
   int log_level;
   int verbose;
   int help;
   int num_threads;
   int batch_size;
+  int quality_encoding_value;
   
   int max_read_length;
   int min_read_length;
@@ -47,6 +50,7 @@ typedef struct filter_options {
   int min_right_quality;
   int max_out_of_quality;
 
+  char *quality_encoding_name;
   char *read_length_range;
   char *read_quality_range;
   char *left_quality_range;
@@ -57,20 +61,20 @@ typedef struct filter_options {
 
   char *exec_name;
   char *command_name;
-} filter_options_t;
+} edit_options_t;
 
 //------------------------------------------------------------------------
 
-filter_options_t *filter_options_new(char *exec_name, char *command_nane);
+edit_options_t *edit_options_new(char *exec_name, char *command_nane);
 
-filter_options_t *filter_options_parse(char *exec_name, char *command_nane,
+edit_options_t *edit_options_parse(char *exec_name, char *command_nane,
 			 int argc, char **argv);
 
-void filter_options_free(filter_options_t *opts);
+void edit_options_free(edit_options_t *opts);
 
-void filter_options_validate(filter_options_t *opts);
+void edit_options_validate(edit_options_t *opts);
 
-void filter_options_display(filter_options_t *opts);
+void edit_options_display(edit_options_t *opts);
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------

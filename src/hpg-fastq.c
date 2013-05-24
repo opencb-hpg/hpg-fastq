@@ -1,26 +1,21 @@
 /*
- * main.c
+ * hpg-fastq.c
  *
  *  Created on: Mar 8, 2013
  *      Author: jtarraga
  */
 
-//#include "bioformats/bam-sam/fast_stats.h"
-//#include "bioformats/bam-sam/bam_stats_report.h"
-//#include "bioformats/bam-sam/bam_filter.h"
-
-//#include "sqlite3.h"
-
 #include "stats_options.h"
-//#include "filter_options.h"
-//#include "index_options.h"
-//#include "sort_options.h"
+#include "filter_options.h"
+#include "edit_options.h"
+
+#include "stats_fastq.h"
+#include "filter_fastq.h"
+#include "edit_fastq.h"
 
 //------------------------------------------------------------------------
 
 void usage(char *exec_name);
-
-extern int bam_index_build2(const char *fn, const char *_fnidx);
 
 //------------------------------------------------------------------------
 //                    M A I N     F U N C T I O N
@@ -42,18 +37,18 @@ int main (int argc, char *argv[]) {
     //--------------------------------------------------------------------
     //                  S T A T S     C O M M A N D
     //--------------------------------------------------------------------
-
-    // parse, validate and display stats options
-    stats_options_t *opts = parse_stats_options(exec_name, command_name, 
-						argc, argv);
-    validate_stats_options(opts);
-    display_stats_options(opts);
     
-    // run and display stats
+    // parse, validate and display stats options
+    stats_options_t *opts = stats_options_parse(exec_name, command_name, 
+						 argc, argv);
+    stats_options_validate(opts);
+    stats_options_display(opts);
+    
+    // run stats
     stats_fastq(opts);
 
     // free memory
-    free_stats_options(opts);
+    stats_options_free(opts);
 
   } else if (strcmp(command_name, "filter" ) == 0) {
 
@@ -61,41 +56,60 @@ int main (int argc, char *argv[]) {
     //                  F I L T E R     C O M M A N D
     //--------------------------------------------------------------------
 
-    printf("Not implemented yet !!\n");
-    /*
     // parse, validate and display filter options
-    filter_options_t *opts = parse_filter_options(exec_name, command_name, 
+    filter_options_t *opts = filter_options_parse(exec_name, command_name, 
 						  argc, argv);
-    validate_filter_options(opts);
-    display_filter_options(opts);
-    
+    filter_options_validate(opts);
+    filter_options_display(opts);
+ 
     // run filter
-    filter_bam(opts);
+    filter_fastq(opts);
 
     // free memory
-    free_filter_options(opts);
-    */
+    filter_options_free(opts);
+
+  } else if (strcmp(command_name, "edit" ) == 0) {
+
+    //--------------------------------------------------------------------
+    //                  E D I T     C O M M A N D
+    //--------------------------------------------------------------------
+
+    // parse, validate and display edit options
+    edit_options_t *opts = edit_options_parse(exec_name, command_name, 
+					      argc, argv);
+    edit_options_validate(opts);
+    edit_options_display(opts);
+    
+    // run filter
+    edit_fastq(opts);
+
+    // free memory
+    edit_options_free(opts);
+
   } else {
 
     //--------------------------------------------------------------------
-    //                  U N K N O W N     C O M M A N D
+    //               U N K N O W N     C O M M A N D
     //--------------------------------------------------------------------
 
     usage(exec_name);
   }
-  printf("Done !\n");
+
+
+  LOG_INFO("Done !\n");
 }
 
 //------------------------------------------------------------------------
 
 void usage(char *exec_name) {
-    printf("Program: %s (High-performance tools for handling BAM files)\n", exec_name);
+    printf("Program: %s (High-performance tools for handling FastQ files)\n", exec_name);
     printf("Version: 1.0.0\n");
     printf("\n");
     printf("Usage: %s <command> [options]\n", exec_name);
     printf("\n");
     printf("Command: stats\t\tstatistics summary\n");
     printf("         filter\t\tfilter a FastQ file by using advanced criteria\n");
+    printf("         edit\t\tedit a FastQ file according the specified options\n");
     printf("\n");    
     printf("For more information about a certain command, type %s <command> --help\n", exec_name);
     exit(-1);

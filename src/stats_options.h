@@ -4,48 +4,60 @@
 /*
  * stats_options.h
  *
- *  Created on: Feb 19, 2013
+ *  Created on: May 22, 2013
  *      Author: jtarraga
  */
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "argtable2.h"
-#include "libconfig.h"
+#include "commons/argtable/argtable2.h"
+#include "commons/config/libconfig.h"
 #include "commons/log.h"
 #include "commons/system_utils.h"
 #include "commons/file_utils.h"
 
-//------------------------------------------------------------------------
+#include "bioformats/fastq/fastq_stats.h"
 
-#define QUALITY_PHRED33_VALUE  33
-#define QUALITY_PHRED33_NAME  "phred33"
-
-#define QUALITY_PHRED64_VALUE  64
-#define QUALITY_PHRED64_NAME  "phred64"
-
+#include "commons_fastq.h"
 
 //------------------------------------------------------------------------
 
-//#define NUM_STATS_OPTIONS	10
-#define NUM_STATS_OPTIONS	8
+#define NUM_STATS_OPTIONS    15
 
 //------------------------------------------------------------------------
 
 typedef struct stats_options { 
+  int kmers_on;
+  int filter_on;
   int log_level;
   int verbose;
   int help;
   int num_threads;
   int batch_size;
   int quality_encoding_value;
-  char *quality_encoding_name;
+  
+  int max_read_length;
+  int min_read_length;
+  int max_N;
+  int max_read_quality;
+  int min_read_quality;
+  int left_length;
+  int max_left_quality;
+  int min_left_quality;
+  int right_length;
+  int max_right_quality;
+  int min_right_quality;
+  int max_out_of_quality;
 
+  char *quality_encoding_name;
+  char *read_length_range;
+  char *read_quality_range;
+  char *left_quality_range;
+  char *right_quality_range;
+  
   char* in_filename;
   char* out_dirname;
-  char* gff_region_filename;
-  char* region_list;
 
   char *exec_name;
   char *command_name;
@@ -53,16 +65,16 @@ typedef struct stats_options {
 
 //------------------------------------------------------------------------
 
-stats_options_t *new_stats_options(char *exec_name, char *command_nane);
+stats_options_t *stats_options_new(char *exec_name, char *command_nane);
 
-stats_options_t *parse_stats_options(char *exec_name, char *command_nane,
-				     int argc, char **argv);
+stats_options_t *stats_options_parse(char *exec_name, char *command_nane,
+			 int argc, char **argv);
 
-void free_stats_options(stats_options_t *opts);
+void stats_options_free(stats_options_t *opts);
 
-void validate_stats_options(stats_options_t *opts);
+void stats_options_validate(stats_options_t *opts);
 
-void display_stats_options(stats_options_t *opts);
+void stats_options_display(stats_options_t *opts);
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------

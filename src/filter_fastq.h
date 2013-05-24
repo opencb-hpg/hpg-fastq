@@ -1,8 +1,8 @@
-#ifndef STATS_FASTQ_H
-#define STATS_FASTQ_H
+#ifndef FILTER_FASTQ_H
+#define FILTER_FASTQ_H
 
 /*
- * stats_fastq.h
+ * filter_fastq.h
  *
  *  Created on: Feb 19, 2013
  *      Author: jtarraga
@@ -22,10 +22,11 @@
 #include "containers/khash.h"
 
 #include "bioformats/fastq/fastq_file.h"
-#include "bioformats/fastq/fastq_stats.h"
+#include "bioformats/fastq/fastq_filter.h"
 
-#include "stats_options.h"
+#include "filter_options.h"
 
+/*
 //--------------------------------------------------------------------
 // stats counters
 //--------------------------------------------------------------------
@@ -35,10 +36,6 @@ KHASH_MAP_INIT_INT(32, int)
 typedef struct stats_counters {
   size_t num_reads;
   int phred;
-
-  int filter_on;
-  size_t num_passed;
-  size_t num_failed;
 
   int min_length;
   int max_length;
@@ -71,14 +68,14 @@ typedef struct stats_counters {
   khash_t(32) *kh_num_Ns_per_nt;
 
 } stats_counters_t;
+*/
+//------------------------------------------------------------------------
+
+void filter_fastq(filter_options_t *opts);
 
 //------------------------------------------------------------------------
 
-void stats_fastq(stats_options_t *opts);
-
-//------------------------------------------------------------------------
-
-#endif // end of STATS_FASTQ_H
+#endif // end of FILTER_FASTQ_H
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------

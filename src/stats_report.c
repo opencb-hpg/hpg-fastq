@@ -10,11 +10,11 @@
 
 //--------------------------------------------------------------------
 
-void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir);
+void report_summary(char *in_filename, stats_counters_t *counters, 
+		    stats_options_t *opts, char *out_dir);
 void report_length(char *in_filename, stats_counters_t *counters, char *out_dir);
 void report_nt_content(char *in_filename, stats_counters_t *counters, char *out_dir);
 void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir);
-
 
 //--------------------------------------------------------------------
 // private functions
@@ -29,16 +29,24 @@ void __generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *
 // stats report
 //--------------------------------------------------------------------
 
-void stats_report(char *in_filename, stats_counters_t *counters, char *out_dir) {
-  report_summary(in_filename, counters, out_dir);
+void stats_report(stats_counters_t *counters, stats_options_t *opts) {
+
+  char *in_filename = opts->in_filename;
+  char *out_dir = opts->out_dirname;
+
+  report_summary(in_filename, counters, opts, out_dir);
   report_length(in_filename, counters, out_dir);
   report_quality(in_filename, counters, out_dir);
   report_nt_content(in_filename, counters, out_dir);
+  if (counters->kmers_on) {
+    report_kmers(in_filename, counters, out_dir);
+  }
 }
 
 //--------------------------------------------------------------------
 
-void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir) {
+void report_summary(char *in_filename, stats_counters_t *counters, 
+		    stats_options_t *opts, char *out_dir) {
 
   char path[strlen(in_filename) + strlen(out_dir) + 100];
   sprintf(path, "%s/%s.summary.txt", out_dir, in_filename);
@@ -54,13 +62,44 @@ void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir
 
   fprintf(f, "FastQ filename: %s\n", in_filename);
   fprintf(f, "\n");
-  fprintf(f, "Number of reads: %lu\n", counters->num_reads);
+  if (counters->filter_on) {
+    fprintf(f, "Filter options:\n");
+    if (opts->read_length_range) {
+      fprintf(f, "\tRead length range   : %s\n", opts->read_length_range);
+    }
+    if (opts->read_quality_range) {
+      fprintf(f, "\tRead quality range  : %s\n", opts->read_quality_range);
+    }
+    if (opts->left_length != MIN_VALUE && opts->left_quality_range) {
+      fprintf(f, "\tLeft length         : %i nucleotides\n", opts->left_length);
+      fprintf(f, "\tLeft quality range  : %s\n", opts->left_quality_range);
+    }
+    if (opts->right_length != MIN_VALUE && opts->right_quality_range) {
+      fprintf(f, "\tRight length        : %i nucleotides\n", opts->right_length);
+      fprintf(f, "\tRight quality range : %s\n", opts->right_quality_range);
+    }
+
+    if (opts->max_N != MAX_VALUE) {
+      fprintf(f, "\tMax. number of Ns   : %i\n", opts->max_N);
+    }
+    if (opts->max_out_of_quality != MAX_VALUE && opts->read_quality_range) {
+      fprintf(f, "\tMax. out of quality : %i nucletotides\n", opts->max_out_of_quality);
+    }
+    fprintf(f, "\n");
+    fprintf(f, "Number of reads in file  : %lu\n", counters->num_passed + counters->num_failed);
+    fprintf(f, "Number of processed reads: %lu (%0.2f %)\n", counters->num_reads, 
+	    100.0f * counters->num_reads / (counters->num_passed + counters->num_failed));
+  } else {
+    fprintf(f, "Filter         : Disabled\n");
+    fprintf(f, "Number of reads: %lu\n", counters->num_reads);
+  }
+  fprintf(f, "\n");
   fprintf(f, "Read length (min., mean, max.): (%i, %0.2f, %i)\n",
 	 counters->min_length, 1.0f * counters->acc_length / counters->num_reads,
 	 counters->max_length);
   fprintf(f, "\n");
-  fprintf(f, "Mean quality = %0.2f\n", 
-	  _normalize_quality(1.0f * counters->acc_quality / counters->num_reads, counters->phred));
+  int qual = _normalize_quality((1.0f *counters->acc_quality / counters->num_reads), counters->phred);
+  fprintf(f, "Mean quality = %i [%c]\n", qual, qual + counters->phred);
   fprintf(f, "\n");
   fprintf(f, "Nucleotide content (A, C, G, T, N)\n");
   fprintf(f, "\tA: %0.2f %\n", 100.0f * counters->num_As / num_nucleotides);
@@ -79,17 +118,24 @@ void report_summary(char *in_filename, stats_counters_t *counters, char *out_dir
   hacc_quals = counters->kh_acc_quality_per_nt;
   hcount_quals = counters->kh_count_quality_per_nt;
 
-  int qual;
   for (k = 0; k < counters->max_length; k++) {
     acc_quals = (kh_size(hacc_quals) && kh_exist(hacc_quals, k) ? kh_value(hacc_quals, k) : 0);
     count_quals = (kh_size(hcount_quals) && kh_exist(hcount_quals, k) ? kh_value(hcount_quals, k) : 0);
 
-    qual = _normalize_quality(acc_quals / count_quals, counters->phred);
+    qual = _normalize_quality(1.0f * acc_quals / count_quals, counters->phred);
     fprintf(f, "\tpos. %i: %i [%c]\t", k + 1, qual, qual + counters->phred);
     if ((k+1) % 5 == 0) fprintf(f, "\n");
   }
   fprintf(f, "\n");
-  
+
+  if (counters->kmers_on) {
+    fprintf(f, "K-mers (top 20)\n");
+    fprintf(f, "\tSequence\tCount\n");
+    for (int i = 0; i < 21; i++) {
+      fprintf(f, "\t%s\t\t%lu\n", counters->kmers[i].string, counters->kmers[i].counter);  
+    }
+  }
+
   fclose(f);
 }
 
@@ -340,7 +386,7 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   char img_prefix[name_length];
 
   // quality histogram data
-  sprintf(data_filename, "%s/%s.quality.histogram.data", out_dir, in_filename);
+  sprintf(data_filename, "%s/%s.read.quality.histogram.data", out_dir, in_filename);
 
   FILE *f = fopen(data_filename, "w");
 
@@ -367,13 +413,13 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   fclose(f);
 
   // quality histogram image
-  sprintf(img_prefix, "%s/%s.quality.histogram", out_dir, in_filename);
+  sprintf(img_prefix, "%s/%s.read.quality.histogram", out_dir, in_filename);
   report_graph_t graph;
   _init_report_graph(&graph);
   
-  strcpy(graph.title, "Quality Histogram");
+  strcpy(graph.title, "Avg. Read Quality Histogram");
   char str[50];
-  sprintf(str, "Quality (Phred%i scale)", counters->phred);
+  sprintf(str, "Read Quality (Phred%i scale)", counters->phred);
   strcpy(graph.xlabel, str);
   strcpy(graph.ylabel, "Number of reads");
   strcpy(graph.type, "boxes");
@@ -425,6 +471,81 @@ void report_quality(char *in_filename, stats_counters_t *counters, char *out_dir
   graph.num_y_columns = 1;
   graph.y_columns[0] = 2;
   
+  _generate_gnuplot_image(&graph, data_filename, img_prefix);
+}
+
+//--------------------------------------------------------------------
+
+void report_kmers(char *in_filename, stats_counters_t *counters, char *out_dir) {
+
+  kmer_t *kmer;
+  int name_length = strlen(in_filename) + strlen(out_dir) + 100;
+  char path[name_length];
+  char data_filename[name_length];
+  char img_prefix[name_length];
+
+  sprintf(path, "%s/%s.kmers.txt", out_dir, in_filename);
+  FILE *f = fopen(path, "w");
+
+  fprintf(f, "# Sequence\tCount\n");
+  for (int i = 0; i < NUM_KMERS; i++) {
+    kmer = &counters->kmers[i];
+    fprintf(f, "%s\t%lu\n", kmer->string, kmer->counter);  
+  }
+
+  fclose(f);
+
+  // 5-top kmers per nt position
+  sprintf(data_filename, "%s/%s.kmers.per.nt.data", out_dir, in_filename);
+
+  f = fopen(data_filename, "w");
+
+  int num_cols = 0;
+  for (int i = 0; i < 5; i++) {
+    kmer = &counters->kmers[i];
+    if (num_cols < kmer->counter_by_pos_size) {
+      num_cols = kmer->counter_by_pos_size;
+    }
+  }
+
+  for (int i = 0; i < num_cols; i++) {
+    fprintf(f, "%i\t%lu\t%lu\t%lu\t%lu\t%lu\n", 
+	    i + 1, 
+	    (counters->kmers[0].counter_by_pos_size < i ? 0 : counters->kmers[0].counter_by_pos[i]),
+	    (counters->kmers[1].counter_by_pos_size < i ? 0 : counters->kmers[1].counter_by_pos[i]),
+	    (counters->kmers[2].counter_by_pos_size < i ? 0 : counters->kmers[2].counter_by_pos[i]),
+	    (counters->kmers[3].counter_by_pos_size < i ? 0 : counters->kmers[3].counter_by_pos[i]),
+	    (counters->kmers[4].counter_by_pos_size < i ? 0 : counters->kmers[4].counter_by_pos[i]));
+  }
+
+  fclose(f);
+
+  // 5-top kmers per nt position image
+  report_graph_t graph;
+  _init_report_graph(&graph);
+  sprintf(img_prefix, "%s/%s.kmers.per.nt", out_dir, in_filename);
+  
+  strcpy(graph.title, "Relative Enrichment over Read Length");
+  strcpy(graph.xlabel, "Nucleotide position");
+  strcpy(graph.ylabel, "Number of K-mers");
+  strcpy(graph.type, "lines");
+  graph.x_autoscale = 0;
+  graph.x_start = 0;
+  graph.x_end = num_cols + 1;
+  graph.y_autoscale = 1;
+  graph.x_column = 1;
+  graph.num_y_columns = 5;
+  graph.y_columns[0] = 2;
+  graph.y_columns[1] = 3;
+  graph.y_columns[2] = 4;
+  graph.y_columns[3] = 5;
+  graph.y_columns[4] = 6;
+  strcpy(graph.y_titles[0], counters->kmers[0].string);  
+  strcpy(graph.y_titles[1], counters->kmers[1].string);  
+  strcpy(graph.y_titles[2], counters->kmers[2].string);  
+  strcpy(graph.y_titles[3], counters->kmers[3].string);  
+  strcpy(graph.y_titles[4], counters->kmers[4].string);  
+
   _generate_gnuplot_image(&graph, data_filename, img_prefix);
 }
 
