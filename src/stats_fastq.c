@@ -90,6 +90,39 @@ void stats_counters_free(stats_counters_t *sc) {
 #define CONSUMER_STAGE   -1
 
 //--------------------------------------------------------------------
+// workflow input
+//--------------------------------------------------------------------
+
+typedef struct fastq_stats_wf_input {
+  stats_options_t *options;
+  fastq_file_t *in_file;
+  fastq_read_stats_options_t *read_stats_options;
+  stats_counters_t *stats_counters;
+} fastq_stats_wf_input_t;
+
+fastq_stats_wf_input_t *fastq_stats_wf_input_new(stats_options_t *opts,
+						 fastq_file_t *in_file,
+						 stats_counters_t *stats_counters) {
+  
+  fastq_stats_wf_input_t *p = (fastq_stats_wf_input_t *) calloc(1, sizeof(fastq_stats_wf_input_t));
+
+  p->in_file = in_file;
+  p->options = opts;
+  p->stats_counters = stats_counters;
+  p->read_stats_options = fastq_read_stats_options_new(opts->kmers_on, 1);
+
+  return p;
+}
+
+void fastq_stats_wf_input_free(fastq_stats_wf_input_t *p) {
+  if (p) {
+    if (p->read_stats_options) fastq_read_stats_options_free(p->read_stats_options);
+
+    free();
+  }
+}
+
+//--------------------------------------------------------------------
 // structure between the different workflow stages
 //--------------------------------------------------------------------
 
@@ -109,62 +142,28 @@ fastq_stats_wf_batch_t *fastq_stats_wf_batch_new(stats_options_t *opts,
 						 array_list_t *fq_stats,
 						 stats_counters_t *stats_counters) {
   
-  fastq_stats_wf_batch_t *b = (fastq_stats_wf_batch_t *) calloc(1, 
+  fastq_stats_wf_batch_t *p = (fastq_stats_wf_batch_t *) calloc(1, 
 								sizeof(fastq_stats_wf_batch_t));
   
-  b->options = opts;
-  b->read_stats_options = read_stats_options;
-  b->fq_reads = fq_reads;
-  b->fq_stats = fq_stats;
-  b->stats_counters = stats_counters;
-  b->passed_reads = NULL;
-  b->failed_reads = NULL;
+  p->options = opts;
+  p->read_stats_options = read_stats_options;
+  p->fq_reads = fq_reads;
+  p->fq_stats = fq_stats;
+  p->stats_counters = stats_counters;
+  p->passed_reads = NULL;
+  p->failed_reads = NULL;
   
-  return b;
+  return p;
 }
 
-void fastq_stats_wf_batch_free(fastq_stats_wf_batch_t *b) {
-  if (b) {
-    if (b->fq_reads) array_list_free(b->fq_reads, (void *) fastq_read_free);
-    if (b->fq_stats) fastq_reads_stats_free(b->fq_stats);
-    if (b->passed_reads) array_list_free(b->passed_reads, NULL);
-    if (b->failed_reads) array_list_free(b->failed_reads, NULL);    
+void fastq_stats_wf_batch_free(fastq_stats_wf_batch_t *p) {
+  if (p) {
+    if (p->fq_reads) array_list_free(p->fq_reads, (void *) fastq_read_free);
+    if (p->fq_stats) fastq_reads_stats_free(p->fq_stats);
+    if (p->passed_reads) array_list_free(p->passed_reads, NULL);
+    if (p->failed_reads) array_list_free(p->failed_reads, NULL);    
 
-    free(b);
-  }
-}
-
-//--------------------------------------------------------------------
-// workflow input
-//--------------------------------------------------------------------
-
-typedef struct fastq_stats_wf_input {
-  stats_options_t *options;
-  fastq_file_t *in_file;
-  fastq_read_stats_options_t *read_stats_options;
-  stats_counters_t *stats_counters;
-} fastq_stats_wf_input_t;
-
-fastq_stats_wf_input_t *fastq_stats_wf_input_new(stats_options_t *opts,
-						 fastq_file_t *in_file,
-						 stats_counters_t *stats_counters) {
-  
-  fastq_stats_wf_input_t *wfi = (fastq_stats_wf_input_t *) calloc(1, sizeof(fastq_stats_wf_input_t));
-
-  wfi->in_file = in_file;
-  wfi->options = opts;
-  wfi->stats_counters = stats_counters;
-  wfi->read_stats_options = fastq_read_stats_options_new(opts->kmers_on, 1);
-
-  return wfi;
-}
-
-void fastq_stats_wf_input_free(fastq_stats_wf_input_t *wfi) {
-  if (wfi) {
-
-    if (wfi->read_stats_options) fastq_read_stats_options_free(wfi->read_stats_options);
-
-    free(wfi);
+    free(p);
   }
 }
 
@@ -237,6 +236,7 @@ int fastq_stats_worker(void *data) {
     fastq_filter_options_free(opts);
 
   } else {
+    // no filter
     size_t num_reads = array_list_size(batch->fq_reads);
     batch->fq_stats = array_list_new(num_reads,
 				     1.25f, COLLECTION_MODE_ASYNCHRONIZED);  

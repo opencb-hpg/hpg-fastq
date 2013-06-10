@@ -15,13 +15,31 @@
 
 //------------------------------------------------------------------------
 
-void usage(char *exec_name);
+void usage(char *exec_name) {
+    printf("Program: %s (High-performance tools for handling FastQ files)\n", exec_name);
+    printf("Version: 1.0.0\n");
+    printf("\n");
+    printf("Usage: %s <command> [options]\n", exec_name);
+    printf("\n");
+    printf("Command: stats\t\tstatistics summary\n");
+    printf("         filter\t\tfilter a FastQ file by using advanced criteria\n");
+    printf("         edit\t\tedit a FastQ file according the specified options\n");
+    printf("\n");    
+    printf("For more information about a certain command, type %s <command> --help\n", exec_name);
+    exit(-1);
+}
 
 //------------------------------------------------------------------------
 //                    M A I N     F U N C T I O N
 //------------------------------------------------------------------------
 
 int main (int argc, char *argv[]) {
+  // init logs, then after parsing the command-line
+  // logs will be re-set according to the command-line
+  log_level = LOG_FATAL_LEVEL;
+  log_verbose = 1;
+  log_file = NULL;
+
   char *exec_name = argv[0];  
   if (argc == 1 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
     usage(exec_name);
@@ -44,6 +62,9 @@ int main (int argc, char *argv[]) {
     stats_options_validate(opts);
     stats_options_display(opts);
     
+    // now, we can set logs according to the command-line
+    init_log_custom(opts->log_level, 1, "hpg-fastq.log", "w");
+
     // run stats
     stats_fastq(opts);
 
@@ -62,6 +83,9 @@ int main (int argc, char *argv[]) {
     filter_options_validate(opts);
     filter_options_display(opts);
  
+    // now, we can set logs according to the command-line
+    init_log_custom(opts->log_level, 1, "hpg-fastq.log", "w");
+
     // run filter
     filter_fastq(opts);
 
@@ -80,6 +104,9 @@ int main (int argc, char *argv[]) {
     edit_options_validate(opts);
     edit_options_display(opts);
     
+    // now, we can set logs according to the command-line
+    init_log_custom(opts->log_level, 1, "hpg-fastq.log", "w");
+
     // run filter
     edit_fastq(opts);
 
@@ -97,22 +124,6 @@ int main (int argc, char *argv[]) {
 
 
   LOG_INFO("Done !\n");
-}
-
-//------------------------------------------------------------------------
-
-void usage(char *exec_name) {
-    printf("Program: %s (High-performance tools for handling FastQ files)\n", exec_name);
-    printf("Version: 1.0.0\n");
-    printf("\n");
-    printf("Usage: %s <command> [options]\n", exec_name);
-    printf("\n");
-    printf("Command: stats\t\tstatistics summary\n");
-    printf("         filter\t\tfilter a FastQ file by using advanced criteria\n");
-    printf("         edit\t\tedit a FastQ file according the specified options\n");
-    printf("\n");    
-    printf("For more information about a certain command, type %s <command> --help\n", exec_name);
-    exit(-1);
 }
 
 //------------------------------------------------------------------------

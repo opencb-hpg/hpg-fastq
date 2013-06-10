@@ -194,7 +194,7 @@ void filter_options_display(filter_options_t *opts) {
   printf("=================================================\n");
 
   if (strcmp(opts->command_name, "filter") == 0 && filter_count == 0) {
-    printf("\n\nNothing to filter, no filter filter_options specified !\n\n");
+    printf("\n\nNothing to filter, no filter options specified !\n\n");
     exit(-1);
   }
 }
