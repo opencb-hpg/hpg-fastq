@@ -118,7 +118,7 @@ void fastq_stats_wf_input_free(fastq_stats_wf_input_t *p) {
   if (p) {
     if (p->read_stats_options) fastq_read_stats_options_free(p->read_stats_options);
 
-    free();
+    free(p);
   }
 }
 

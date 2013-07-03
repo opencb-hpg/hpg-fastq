@@ -31,8 +31,18 @@ void __generate_gnuplot_image(report_graph_t *graph, char *data_filename, char *
 
 void stats_report(stats_counters_t *counters, stats_options_t *opts) {
 
-  char *in_filename = opts->in_filename;
   char *out_dir = opts->out_dirname;
+
+  //char *in_filename = opts->in_filename;
+  char *in_filename, *p = strrchr(opts->in_filename, '/');
+  if (p == NULL) {
+    in_filename = strdup(opts->in_filename);
+  } else {
+    assert(strlen(p) > 1);
+    in_filename = strdup(p + 1);
+  }
+
+  //  LOG_DEBUG_F("in_filename = %s\n", in_filename);
 
   report_summary(in_filename, counters, opts, out_dir);
   report_length(in_filename, counters, out_dir);
@@ -41,6 +51,8 @@ void stats_report(stats_counters_t *counters, stats_options_t *opts) {
   if (counters->kmers_on) {
     report_kmers(in_filename, counters, out_dir);
   }
+
+  free(in_filename);
 }
 
 //--------------------------------------------------------------------
@@ -52,6 +64,7 @@ void report_summary(char *in_filename, stats_counters_t *counters,
   sprintf(path, "%s/%s.summary.txt", out_dir, in_filename);
 
   FILE *f = fopen(path, "w");
+  assert(f != NULL);
 
   fprintf(f, "-----------------------------------\n");
   fprintf(f, "      FastQ quality report\n");
